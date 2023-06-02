@@ -54,23 +54,17 @@ void set_str__insert(set_str* h, char* key) {
 }
 
 void set_str__erase(set_str* h, char* key) {
-  if (h->root == NULL) {
-    return;
-  }
+  if (h->root == NULL) return;
   set_str__node* p = h->root;
   set_str__node* pp = NULL;
   while (true) {
     if (is_greater_str(key, p->key)) {
-      if (p->right == NULL) {
-        return;
-      }
+      if (p->right == NULL) return;
       pp = p;
       p = p->right;
     }
     else if (is_less_str(key, p->key)) {
-      if (p->left == NULL) {
-        return;
-      }
+      if (p->left == NULL) return;
       pp = p;
       p = p->left;
     }
@@ -83,39 +77,29 @@ void set_str__erase(set_str* h, char* key) {
     return;
   }
   if (pp->left == p) {
-    if (p->left != NULL) {
+    if (p->left != NULL)
       pp->left = p->left;
-    }
-    else {
+    else
       pp->left = p->right;
-    }
   }
   else {
-    if (p->left != NULL) {
+    if (p->left != NULL)
       pp->right = p->left;
-    }
-    else {
+    else
       pp->right = p->right;
-    }
   }
 }
 
 bool set_str__contains(set_str* h, char* key) {
-  if (h->root == NULL) {
-    return false;
-  }
+  if (h->root == NULL) return false;
   set_str__node* p = h->root;
   while (true) {
     if (is_greater_str(key, p->key)) {
-      if (p->right == NULL) {
-        return false;
-      }
+      if (p->right == NULL) return false;
       p = p->right;
     }
     else if (is_less_str(key, p->key)) {
-      if (p->left == NULL) {
-        return false;
-      }
+      if (p->left == NULL) return false;
       p = p->left;
     }
     else {
