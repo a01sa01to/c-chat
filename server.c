@@ -1,8 +1,10 @@
+#include <arpa/inet.h>
 #include <netinet/in.h>
 #include <pthread.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "io.h"
 #include "myutil.h"
@@ -77,7 +79,5 @@ int main(int argc, char *argv[]) {
   printf("%sinfo%s connected from %s:%d\n", COLOR_CYAN, COLOR_RESET, inet_ntoa(client.addr.sin_addr), ntohs(client.addr.sin_port));
   close(listening_socket);
 
-  while (true) {
-  }
   return 0;
 }
