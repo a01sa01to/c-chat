@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "io.h"
 #include "myutil.h"
 
 // todo
@@ -13,15 +14,16 @@
 
 int main(int argc, char* argv[]) {
   if (argc != 3) {
-    printf("Usage: %s <host> <port>\n", argv[0]);
+    printf("%sinfo%s usage: %s <host> <port>\n", COLOR_CYAN, COLOR_RESET, argv[0]);
     return 1;
   }
   char* host = argv[1];
   int port = str2portNum(argv[2]);
   if (port == -1) {
-    printf("Invalid port number: %s\n", argv[2]);
+    printf("%serror%s invalid port number: %s\n", COLOR_RED, COLOR_RESET, argv[2]);
     return 1;
   }
-  printf("Connecting to %s:%d\n", host, port);
+  printf("%sinfo%s connecting to %s:%d\n", COLOR_CYAN, COLOR_RESET, host, port);
+
   return 0;
 }
