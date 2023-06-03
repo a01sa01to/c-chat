@@ -1,3 +1,6 @@
+#include <netdb.h>
+#include <netinet/in.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -24,6 +27,31 @@ int main(int argc, char* argv[]) {
     return 1;
   }
   printf("%sinfo%s connecting to %s:%d\n", COLOR_CYAN, COLOR_RESET, host, port);
+
+  int sock = socket(PF_INET, SOCK_STREAM, 0);
+  if (sock == -1) {
+    printf("%serror%s socket creation failed", COLOR_RED, COLOR_RESET);
+    return 1;
+  }
+
+  struct sockaddr_in server;
+  memset((void*) &server, 0, sizeof(server));
+  server.sin_family = PF_INET;
+  server.sin_port = htons(port);
+  struct hostent* hostent = gethostbyname(host);
+  if (hostent == NULL) {
+    printf("%serror%s gethostbyname failed", COLOR_RED, COLOR_RESET);
+    return 1;
+  }
+  memcpy((void*) &server.sin_addr, (void*) hostent->h_addr, hostent->h_length);
+
+  // connect
+  if (connect(sock, (struct sockaddr*) &server, sizeof(server)) == -1) {
+    printf("%serror%s connect failed", COLOR_RED, COLOR_RESET);
+    return 1;
+  }
+
+  printf("%sinfo%s connected\n", COLOR_CYAN, COLOR_RESET);
 
   return 0;
 }
