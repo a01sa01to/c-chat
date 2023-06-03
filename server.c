@@ -1,4 +1,5 @@
 #include <netinet/in.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -46,5 +47,13 @@ int main(int argc, char* argv[]) {
   server.sin_addr.s_addr = htonl(INADDR_ANY);
 
   // Bind
+  if (bind(listening_socket, (struct sockaddr*) &server, sizeof(server)) == -1) {
+    printf("%serror%s bind failed", COLOR_RED, COLOR_RESET);
+    return 1;
+  }
+
+  // Listen
+  while (true) {
+  }
   return 0;
 }
