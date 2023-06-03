@@ -70,8 +70,8 @@ int main(int argc, char *argv[]) {
   }
   client_t client;
   memset((void *) &client, 0, sizeof(client));
-  int connected_socket = accept(listening_socket, (struct sockaddr *) &client.addr, &(socklen_t) { sizeof(client.addr) });
-  if (connected_socket == -1) {
+  client.sock = accept(listening_socket, (struct sockaddr *) &client.addr, &(socklen_t) { sizeof(client.addr) });
+  if (client.sock == -1) {
     printf("%serror%s accept failed", COLOR_RED, COLOR_RESET);
     return 1;
   }
@@ -79,5 +79,35 @@ int main(int argc, char *argv[]) {
   printf("%sinfo%s connected from %s:%d\n", COLOR_CYAN, COLOR_RESET, inet_ntoa(client.addr.sin_addr), ntohs(client.addr.sin_port));
   close(listening_socket);
 
+  // create thread
+  pthread_t send_thread, receive_thread;
+  if (pthread_create(&send_thread, NULL, handle_send, (void *) &client) != 0) {
+    printf("%serror%s sender pthread_create failed", COLOR_RED, COLOR_RESET);
+    return 1;
+  }
+  if (pthread_create(&receive_thread, NULL, handle_receive, (void *) &client) != 0) {
+    printf("%serror%s receiver pthread_create failed", COLOR_RED, COLOR_RESET);
+    return 1;
+  }
+
+  // join thread
+  if (pthread_join(send_thread, NULL) != 0) {
+    printf("%serror%s sender pthread_join failed", COLOR_RED, COLOR_RESET);
+  }
+  if (pthread_join(receive_thread, NULL) != 0) {
+    printf("%serror%s receiver pthread_join failed", COLOR_RED, COLOR_RESET);
+  }
   return 0;
+}
+
+void *handle_send(void *arg) {
+  // todo
+  printf("handle_send\n");
+  pthread_exit(NULL);
+}
+
+void *handle_receive(void *arg) {
+  // todo
+  printf("handle_receive\n");
+  pthread_exit(NULL);
 }

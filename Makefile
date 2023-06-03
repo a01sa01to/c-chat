@@ -1,10 +1,10 @@
 all: server client
 
 server: server.c myutil.h ds.h io.h
-	gcc -o server server.c
+	gcc -o server server.c -lpthread
 
 client: client.c myutil.h ds.h io.h
-	gcc -o client client.c
+	gcc -o client client.c -lpthread
 
 run_server: server
 	./server 50000
