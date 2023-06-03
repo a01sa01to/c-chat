@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "myutil.h"
+
 // todo
 // - ./client <host> <port>
 // - サーバーに接続する
@@ -15,7 +17,11 @@ int main(int argc, char* argv[]) {
     return 1;
   }
   char* host = argv[1];
-  int port = atoi(argv[2]);
+  int port = str2portNum(argv[2]);
+  if (port == -1) {
+    printf("Invalid port number: %s\n", argv[2]);
+    return 1;
+  }
   printf("Connecting to %s:%d\n", host, port);
   return 0;
 }

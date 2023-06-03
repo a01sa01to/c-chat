@@ -1,9 +1,9 @@
 all: server client
 
-server: server.c
+server: server.c myutil.h ds.h io.h
 	gcc -o server server.c
 
-client: client.c
+client: client.c myutil.h ds.h io.h
 	gcc -o client client.c
 
 run_server: server

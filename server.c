@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "myutil.h"
+
 // todo
 // - ./server <port>
 // - ポートで待ち受ける
@@ -14,7 +16,11 @@ int main(int argc, char* argv[]) {
     printf("Usage: %s <port>\n", argv[0]);
     return 1;
   }
-  int port = atoi(argv[1]);
+  int port = str2portNum(argv[1]);
+  if (port == -1) {
+    printf("Invalid port number: %s\n", argv[1]);
+    return 1;
+  }
   printf("Listening on port %d\n", port);
   return 0;
 }
