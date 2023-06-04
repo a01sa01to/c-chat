@@ -13,11 +13,15 @@
 
 // ---------- global variables ---------- //
 #define MAX_CLIENTS 10
+#define NAME_LEN 20
 
 // ---------- structs ---------- //
 typedef struct {
   struct sockaddr_in addr;
   int sock;
+  char name[NAME_LEN];
+  pthread_t send_thread, recv_thread;
+  int id;
 } client_t;
 
 // ---------- main ---------- //
@@ -65,14 +69,14 @@ int main(int argc, char *argv[]) {
   }
 
   client_t clients[MAX_CLIENTS];
-  pthread_t send_threads[MAX_CLIENTS], recv_threads[MAX_CLIENTS];
   int num_clients = 0;
 
   while (true) {
     // accept
     client_t *client = &clients[num_clients];
-    pthread_t *send_thread = &send_threads[num_clients];
-    pthread_t *receive_thread = &recv_threads[num_clients];
+    pthread_t *send_thread = &client->send_thread;
+    pthread_t *receive_thread = &client->recv_thread;
+    client->id = num_clients;
     num_clients++;
 
     memset((void *) client, 0, sizeof(*client));
@@ -82,6 +86,7 @@ int main(int argc, char *argv[]) {
       exit(EXIT_FAILURE);
     }
     printf("%sinfo%s new connection from %s:%d\n", FONT_CYAN, FONT_RESET, inet_ntoa(client->addr.sin_addr), ntohs(client->addr.sin_port));
+    printf("%sinfo%s number of clients: %d/%d\n", FONT_CYAN, FONT_RESET, num_clients, MAX_CLIENTS);
 
     if (pthread_create(send_thread, NULL, handle_send, (void *) &client->sock) != 0) {
       printf("%serror%s send thread create failed", FONT_RED, FONT_RESET);
@@ -99,14 +104,11 @@ int main(int argc, char *argv[]) {
   }
   close(listening_socket);
   printf("%sinfo%s closing server\n", FONT_CYAN, FONT_RESET);
-  for (int i = 0; i < num_clients; i++) pthread_join(send_threads[i], NULL);
+  for (int i = 0; i < num_clients; i++) pthread_join(clients[i].send_thread, NULL);
   printf("%ssuccess%s send threads joined\n", FONT_GREEN, FONT_RESET);
-  for (int i = 0; i < num_clients; i++) pthread_join(recv_threads[i], NULL);
+  for (int i = 0; i < num_clients; i++) pthread_join(clients[i].recv_thread, NULL);
   printf("%ssuccess%s receive threads joined\n", FONT_GREEN, FONT_RESET);
   for (int i = 0; i < num_clients; i++) close(clients[i].sock);
   printf("%ssuccess%s sockets closed\n", FONT_GREEN, FONT_RESET);
   exit(EXIT_SUCCESS);
-}
-
-void *handle_client(void *arg) {
 }
