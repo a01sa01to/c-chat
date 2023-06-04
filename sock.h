@@ -23,7 +23,6 @@ void *handle_send(void *arg) {
   // 標準入力を非同期にする
   fd_set fds;
   struct timeval tv = { 0, 10 };
-  printf("handle_send start\n");
 
   while (state.is_active) {
     // 標準入力を監視する
@@ -46,14 +45,12 @@ void *handle_send(void *arg) {
       }
     }
   }
-  printf("handle_send exit\n");
   pthread_exit(NULL);
 }
 
 void *handle_receive(void *arg) {
   client_t *client = (client_t *) arg;
   char buffer[BUFSIZE];
-  printf("handle_receive start\n");
   while (state.is_active) {
     memset(buffer, '\0', BUFSIZE);
     recv(client->sock, buffer, BUFSIZE, 0);
@@ -65,6 +62,5 @@ void *handle_receive(void *arg) {
       break;
     }
   }
-  printf("handle_receive exit\n");
   pthread_exit(NULL);
 }
