@@ -1,9 +1,9 @@
 all: server client
 
-server: server.c myutil.h ds.h io.h
+server: server.c myutil.h ds.h io.h sock.h
 	gcc -o server server.c -lpthread
 
-client: client.c myutil.h ds.h io.h
+client: client.c myutil.h ds.h io.h sock.h
 	gcc -o client client.c -lpthread
 
 run_server: server

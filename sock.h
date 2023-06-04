@@ -22,20 +22,22 @@ void *handle_send(void *arg) {
 
   // 標準入力を非同期にする
   fd_set fds;
-  FD_ZERO(&fds);
-  FD_SET(0, &fds);
   struct timeval tv = { 0, 10 };
+  printf("handle_send start\n");
 
   while (state.is_active) {
     // 標準入力を監視する
+    FD_ZERO(&fds);
+    FD_SET(0, &fds);
     int ret = select(FD_SETSIZE, &fds, NULL, NULL, &tv);
     if (ret == -1) {
       printf("%serror%s select failed\n", COLOR_RED, COLOR_RESET);
       exit(1);
     }
-    else if (ret != 0) {
+    else if (ret != 0 && FD_ISSET(0, &fds)) {
       memset(buffer, '\0', BUFSIZE);
       fgets(buffer, BUFSIZE, stdin);
+      chop(buffer);
       send(client->sock, buffer, BUFSIZE, 0);
       if (is_equal_str(buffer, "quit")) {
         printf("quit\n");
@@ -51,6 +53,7 @@ void *handle_send(void *arg) {
 void *handle_receive(void *arg) {
   client_t *client = (client_t *) arg;
   char buffer[BUFSIZE];
+  printf("handle_receive start\n");
   while (state.is_active) {
     memset(buffer, '\0', BUFSIZE);
     recv(client->sock, buffer, BUFSIZE, 0);
