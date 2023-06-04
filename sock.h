@@ -1,3 +1,5 @@
+#pragma once
+
 #include <netinet/in.h>
 #include <pthread.h>
 
@@ -17,14 +19,29 @@ state_t state = { true };
 void *handle_send(void *arg) {
   client_t *client = (client_t *) arg;
   char buffer[BUFSIZE];
+
+  // 標準入力を非同期にする
+  fd_set fds;
+  FD_ZERO(&fds);
+  FD_SET(0, &fds);
+  struct timeval tv = { 0, 10 };
+
   while (state.is_active) {
-    memset(buffer, '\0', BUFSIZE);
-    fgets(buffer, BUFSIZE, stdin);
-    send(client->sock, buffer, BUFSIZE, 0);
-    if (is_equal_str(buffer, "quit")) {
-      printf("quit\n");
-      state.is_active = false;
-      break;
+    // 標準入力を監視する
+    int ret = select(FD_SETSIZE, &fds, NULL, NULL, &tv);
+    if (ret == -1) {
+      printf("%serror%s select failed\n", COLOR_RED, COLOR_RESET);
+      exit(1);
+    }
+    else if (ret != 0) {
+      memset(buffer, '\0', BUFSIZE);
+      fgets(buffer, BUFSIZE, stdin);
+      send(client->sock, buffer, BUFSIZE, 0);
+      if (is_equal_str(buffer, "quit")) {
+        printf("quit\n");
+        state.is_active = false;
+        break;
+      }
     }
   }
   printf("handle_send exit\n");
