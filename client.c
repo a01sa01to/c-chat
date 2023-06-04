@@ -60,6 +60,7 @@ int main(int argc, char *argv[]) {
   // todo
   send(sock, "quit", 4, 0);
 
+  close(sock);
   return 0;
 }
 

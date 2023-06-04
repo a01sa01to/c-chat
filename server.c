@@ -90,5 +90,7 @@ int main(int argc, char *argv[]) {
   if (pthread_join(receive_thread, NULL) != 0) {
     printf("%serror%s receiver pthread_join failed", COLOR_RED, COLOR_RESET);
   }
+
+  close(client.sock);
   return 0;
 }
