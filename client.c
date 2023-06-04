@@ -48,7 +48,9 @@ int main(int argc, char *argv[]) {
 
   printf("%sinfo%s connected\n", FONT_CYAN, FONT_RESET);
 
-  printf("%sinfo%s send %s/help%s to show how to use.", FONT_CYAN, FONT_RESET, FONT_BOLD, FONT_RESET);
+  printf("%stips%s send %s/help%s to show how to use.\n", FONT_PURPLE, FONT_RESET, FONT_BOLD, FONT_RESET);
+  printf("\n\r> ");
+  fflush(stdout);
 
   // create thread
   pthread_t send_thread, receive_thread;

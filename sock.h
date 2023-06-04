@@ -37,9 +37,9 @@ void *handle_send(void *arg) {
       memset(buffer, '\0', BUFSIZE);
       fgets(buffer, BUFSIZE, stdin);
       chop(buffer);
-      send(client->sock, buffer, BUFSIZE, 0);
+      send(client->sock, encode("anonymous", buffer), BUFSIZE, 0);
+
       if (is_equal_str(buffer, "quit")) {
-        printf("quit\n");
         state.is_active = false;
         break;
       }
@@ -54,10 +54,12 @@ void *handle_receive(void *arg) {
   while (state.is_active) {
     memset(buffer, '\0', BUFSIZE);
     recv(client->sock, buffer, BUFSIZE, 0);
-    printf("Received: %s\n", buffer);
+    printf("%s%s%s\n", FONT_UNDERLINED, decode_username(buffer), FONT_RESET);
+    printf(">> %s\n\n", decode_message(buffer));
+    printf("\r> ");
     fflush(stdout);
-    if (is_equal_str(buffer, "quit")) {
-      printf("quit\n");
+    if (is_equal_str(decode_message(buffer), "quit")) {
+      printf("%sinfo%s quit\n", FONT_CYAN, FONT_RESET);
       state.is_active = false;
       break;
     }
