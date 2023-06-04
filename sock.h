@@ -31,7 +31,7 @@ void *handle_send(void *arg) {
     FD_SET(0, &fds);
     int ret = select(FD_SETSIZE, &fds, NULL, NULL, &tv);
     if (ret == -1) {
-      printf("%serror%s select failed\n", COLOR_RED, COLOR_RESET);
+      printf("%serror%s select failed\n", FONT_RED, FONT_RESET);
       exit(1);
     }
     else if (ret != 0 && FD_ISSET(0, &fds)) {

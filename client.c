@@ -12,20 +12,20 @@
 
 int main(int argc, char *argv[]) {
   if (argc != 3) {
-    printf("%sinfo%s usage: %s <host> <port>\n", COLOR_CYAN, COLOR_RESET, argv[0]);
+    printf("%sinfo%s usage: %s <host> <port>\n", FONT_CYAN, FONT_RESET, argv[0]);
     return 1;
   }
   char *host = argv[1];
   int port = str2portNum(argv[2]);
   if (port == -1) {
-    printf("%serror%s invalid port number: %s\n", COLOR_RED, COLOR_RESET, argv[2]);
+    printf("%serror%s invalid port number: %s\n", FONT_RED, FONT_RESET, argv[2]);
     return 1;
   }
-  printf("%sinfo%s connecting to %s:%d\n", COLOR_CYAN, COLOR_RESET, host, port);
+  printf("%sinfo%s connecting to %s:%d\n", FONT_CYAN, FONT_RESET, host, port);
 
   struct hostent *hostent = gethostbyname(host);
   if (hostent == NULL) {
-    printf("%serror%s gethostbyname failed", COLOR_RED, COLOR_RESET);
+    printf("%serror%s gethostbyname failed", FONT_RED, FONT_RESET);
     return 1;
   }
 
@@ -38,33 +38,35 @@ int main(int argc, char *argv[]) {
   client_t client;
   client.sock = socket(PF_INET, SOCK_STREAM, 0);
   if (client.sock == -1) {
-    printf("%serror%s socket creation failed", COLOR_RED, COLOR_RESET);
+    printf("%serror%s socket creation failed", FONT_RED, FONT_RESET);
     return 1;
   }
   if (connect(client.sock, (struct sockaddr *) &server, sizeof(server)) == -1) {
-    printf("%serror%s connect failed", COLOR_RED, COLOR_RESET);
+    printf("%serror%s connect failed", FONT_RED, FONT_RESET);
     return 1;
   }
 
-  printf("%sinfo%s connected\n", COLOR_CYAN, COLOR_RESET);
+  printf("%sinfo%s connected\n", FONT_CYAN, FONT_RESET);
+
+  printf("%sinfo%s send %s/help%s to show how to use.", FONT_CYAN, FONT_RESET, FONT_BOLD, FONT_RESET);
 
   // create thread
   pthread_t send_thread, receive_thread;
   if (pthread_create(&send_thread, NULL, handle_send, (void *) &client) != 0) {
-    printf("%serror%s sender pthread_create failed", COLOR_RED, COLOR_RESET);
+    printf("%serror%s sender pthread_create failed", FONT_RED, FONT_RESET);
     return 1;
   }
   if (pthread_create(&receive_thread, NULL, handle_receive, (void *) &client) != 0) {
-    printf("%serror%s receiver pthread_create failed", COLOR_RED, COLOR_RESET);
+    printf("%serror%s receiver pthread_create failed", FONT_RED, FONT_RESET);
     return 1;
   }
 
   // join thread
   if (pthread_join(send_thread, NULL) != 0) {
-    printf("%serror%s sender pthread_join failed", COLOR_RED, COLOR_RESET);
+    printf("%serror%s sender pthread_join failed", FONT_RED, FONT_RESET);
   }
   if (pthread_join(receive_thread, NULL) != 0) {
-    printf("%serror%s receiver pthread_join failed", COLOR_RED, COLOR_RESET);
+    printf("%serror%s receiver pthread_join failed", FONT_RED, FONT_RESET);
   }
 
   close(client.sock);

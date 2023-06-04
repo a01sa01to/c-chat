@@ -13,25 +13,25 @@
 int main(int argc, char *argv[]) {
   // Input validation
   if (argc != 2) {
-    printf("%sinfo%s usage: %s <port>\n", COLOR_CYAN, COLOR_RESET, argv[0]);
+    printf("%sinfo%s usage: %s <port>\n", FONT_CYAN, FONT_RESET, argv[0]);
     return 1;
   }
   int port = str2portNum(argv[1]);
   if (port == -1) {
-    printf("%serror%s invalid port number: %s\n", COLOR_RED, COLOR_RESET, argv[1]);
+    printf("%serror%s invalid port number: %s\n", FONT_RED, FONT_RESET, argv[1]);
     return 1;
   }
-  printf("%sinfo%s listening on port %d\n", COLOR_CYAN, COLOR_RESET, port);
+  printf("%sinfo%s listening on port %d\n", FONT_CYAN, FONT_RESET, port);
 
   // Create a socket
   int listening_socket = socket(PF_INET, SOCK_STREAM, 0);
   if (listening_socket == -1) {
-    printf("%serror%s socket creation failed", COLOR_RED, COLOR_RESET);
+    printf("%serror%s socket creation failed", FONT_RED, FONT_RESET);
     return 1;
   }
   // Socket option
   if (setsockopt(listening_socket, SOL_SOCKET, SO_REUSEADDR, &(int) { 1 }, sizeof(int))) {
-    printf("%serror%s socket option failed", COLOR_RED, COLOR_RESET);
+    printf("%serror%s socket option failed", FONT_RED, FONT_RESET);
     return 1;
   }
 
@@ -44,43 +44,43 @@ int main(int argc, char *argv[]) {
 
   // Bind
   if (bind(listening_socket, (struct sockaddr *) &server, sizeof(server)) == -1) {
-    printf("%serror%s bind failed", COLOR_RED, COLOR_RESET);
+    printf("%serror%s bind failed", FONT_RED, FONT_RESET);
     return 1;
   }
 
   // Listen
   if (listen(listening_socket, 5) == -1) {
-    printf("%serror%s listen failed", COLOR_RED, COLOR_RESET);
+    printf("%serror%s listen failed", FONT_RED, FONT_RESET);
     return 1;
   }
   client_t client;
   memset((void *) &client, 0, sizeof(client));
   client.sock = accept(listening_socket, (struct sockaddr *) &client.addr, &(socklen_t) { sizeof(client.addr) });
   if (client.sock == -1) {
-    printf("%serror%s accept failed", COLOR_RED, COLOR_RESET);
+    printf("%serror%s accept failed", FONT_RED, FONT_RESET);
     return 1;
   }
 
-  printf("%sinfo%s connected from %s:%d\n", COLOR_CYAN, COLOR_RESET, inet_ntoa(client.addr.sin_addr), ntohs(client.addr.sin_port));
+  printf("%sinfo%s connected from %s:%d\n", FONT_CYAN, FONT_RESET, inet_ntoa(client.addr.sin_addr), ntohs(client.addr.sin_port));
   close(listening_socket);
 
   // create thread
   pthread_t send_thread, receive_thread;
   if (pthread_create(&send_thread, NULL, handle_send, (void *) &client) != 0) {
-    printf("%serror%s sender pthread_create failed", COLOR_RED, COLOR_RESET);
+    printf("%serror%s sender pthread_create failed", FONT_RED, FONT_RESET);
     return 1;
   }
   if (pthread_create(&receive_thread, NULL, handle_receive, (void *) &client) != 0) {
-    printf("%serror%s receiver pthread_create failed", COLOR_RED, COLOR_RESET);
+    printf("%serror%s receiver pthread_create failed", FONT_RED, FONT_RESET);
     return 1;
   }
 
   // join thread
   if (pthread_join(send_thread, NULL) != 0) {
-    printf("%serror%s sender pthread_join failed", COLOR_RED, COLOR_RESET);
+    printf("%serror%s sender pthread_join failed", FONT_RED, FONT_RESET);
   }
   if (pthread_join(receive_thread, NULL) != 0) {
-    printf("%serror%s receiver pthread_join failed", COLOR_RED, COLOR_RESET);
+    printf("%serror%s receiver pthread_join failed", FONT_RED, FONT_RESET);
   }
 
   close(client.sock);
