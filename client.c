@@ -10,14 +10,6 @@
 #include "myutil.h"
 #include "sock.h"
 
-// todo
-// - ./client <host> <port>
-// - サーバーに接続する
-// - quit で退出する
-// - メッセージを送る
-// - メッセージを受け取る
-// - 名前を入力できるようにする
-
 int main(int argc, char *argv[]) {
   if (argc != 3) {
     printf("%sinfo%s usage: %s <host> <port>\n", COLOR_CYAN, COLOR_RESET, argv[0]);

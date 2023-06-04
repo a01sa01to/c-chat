@@ -2,10 +2,6 @@
 
 #include <string.h>
 
-// todo
-// - 色を指定して出力できるようにする
-// - サニタイズする
-
 const char* COLOR_RED = "\033[31m";
 const char* COLOR_GREEN = "\033[32m";
 const char* COLOR_BROWN = "\033[33m";
