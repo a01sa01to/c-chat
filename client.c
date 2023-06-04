@@ -73,15 +73,19 @@ int main(int argc, char *argv[]) {
     if (pthread_tryjoin_np(send_thread, NULL) == 0) {
       sender_terminated = true;
       printf("%ssuccess%s sender pthread_join was terminated\n", FONT_GREEN, FONT_RESET);
-      printf("%sinfo%s trying to terminate receiver thread\n", FONT_CYAN, FONT_RESET);
-      if (!receiver_terminated && pthread_cancel(receive_thread) != 0) printf("%serror%s receiver pthread_cancel failed", FONT_RED, FONT_RESET);
+      if (!receiver_terminated) {
+        printf("%sinfo%s trying to terminate receiver thread\n", FONT_CYAN, FONT_RESET);
+        if (pthread_cancel(receive_thread) != 0) printf("%serror%s receiver pthread_cancel failed", FONT_RED, FONT_RESET);
+      }
     }
     // receiver
     if (pthread_tryjoin_np(receive_thread, NULL) == 0) {
       receiver_terminated = true;
       printf("%ssuccess%s receiver pthread_join success\n", FONT_GREEN, FONT_RESET);
-      printf("%sinfo%s trying to terminate sender thread\n", FONT_CYAN, FONT_RESET);
-      if (!sender_terminated && pthread_cancel(send_thread) != 0) printf("%serror%s sender pthread_cancel failed", FONT_RED, FONT_RESET);
+      if (!sender_terminated) {
+        printf("%sinfo%s trying to terminate sender thread\n", FONT_CYAN, FONT_RESET);
+        if (pthread_cancel(send_thread) != 0) printf("%serror%s sender pthread_cancel failed", FONT_RED, FONT_RESET);
+      }
     }
   }
   close(sock);
