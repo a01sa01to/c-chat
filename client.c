@@ -4,12 +4,11 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "io.h"
 #include "myutil.h"
-
-void *handle_send(void *arg);
-void *handle_receive(void *arg);
+#include "sock.h"
 
 // todo
 // - ./client <host> <port>
@@ -32,9 +31,9 @@ int main(int argc, char *argv[]) {
   }
   printf("%sinfo%s connecting to %s:%d\n", COLOR_CYAN, COLOR_RESET, host, port);
 
-  int sock = socket(PF_INET, SOCK_STREAM, 0);
-  if (sock == -1) {
-    printf("%serror%s socket creation failed", COLOR_RED, COLOR_RESET);
+  struct hostent *hostent = gethostbyname(host);
+  if (hostent == NULL) {
+    printf("%serror%s gethostbyname failed", COLOR_RED, COLOR_RESET);
     return 1;
   }
 
@@ -42,36 +41,40 @@ int main(int argc, char *argv[]) {
   memset((void *) &server, 0, sizeof(server));
   server.sin_family = PF_INET;
   server.sin_port = htons(port);
-  struct hostent *hostent = gethostbyname(host);
-  if (hostent == NULL) {
-    printf("%serror%s gethostbyname failed", COLOR_RED, COLOR_RESET);
-    return 1;
-  }
   memcpy((void *) &server.sin_addr, (void *) hostent->h_addr, hostent->h_length);
 
-  // connect
-  if (connect(sock, (struct sockaddr *) &server, sizeof(server)) == -1) {
+  client_t client;
+  client.sock = socket(PF_INET, SOCK_STREAM, 0);
+  if (client.sock == -1) {
+    printf("%serror%s socket creation failed", COLOR_RED, COLOR_RESET);
+    return 1;
+  }
+  if (connect(client.sock, (struct sockaddr *) &server, sizeof(server)) == -1) {
     printf("%serror%s connect failed", COLOR_RED, COLOR_RESET);
     return 1;
   }
 
   printf("%sinfo%s connected\n", COLOR_CYAN, COLOR_RESET);
 
-  // todo
-  send(sock, "quit", 4, 0);
+  // create thread
+  pthread_t send_thread, receive_thread;
+  if (pthread_create(&send_thread, NULL, handle_send, (void *) &client) != 0) {
+    printf("%serror%s sender pthread_create failed", COLOR_RED, COLOR_RESET);
+    return 1;
+  }
+  if (pthread_create(&receive_thread, NULL, handle_receive, (void *) &client) != 0) {
+    printf("%serror%s receiver pthread_create failed", COLOR_RED, COLOR_RESET);
+    return 1;
+  }
 
-  close(sock);
+  // join thread
+  if (pthread_join(send_thread, NULL) != 0) {
+    printf("%serror%s sender pthread_join failed", COLOR_RED, COLOR_RESET);
+  }
+  if (pthread_join(receive_thread, NULL) != 0) {
+    printf("%serror%s receiver pthread_join failed", COLOR_RED, COLOR_RESET);
+  }
+
+  close(client.sock);
   return 0;
-}
-
-void *handle_send(void *arg) {
-  // todo
-  printf("handle_send\n");
-  pthread_exit(NULL);
-}
-
-void *handle_receive(void *arg) {
-  // todo
-  printf("handle_receive\n");
-  pthread_exit(NULL);
 }
