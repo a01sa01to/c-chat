@@ -21,15 +21,16 @@ void *handle_receive(void *arg) {
     printf("\r%s%s%s\n", FONT_UNDERLINED, decode_username(buffer), FONT_RESET);
     // メッセージを表示
     printf(">> %s\n", decode_message(buffer));
-    // プロンプトを表示
-    printf("\n\r> ");
-    fflush(stdout);
 
     // 終了判定
     if (is_equal_str(decode_message(buffer), "quit")) {
-      printf("%sinfo%s quit\n", FONT_CYAN, FONT_RESET);
+      printf("\n%sinfo%s quit\n", FONT_CYAN, FONT_RESET);
       break;
     }
+
+    // プロンプトを表示
+    printf("\n\r> ");
+    fflush(stdout);
   }
   pthread_exit(NULL);
 }
