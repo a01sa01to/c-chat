@@ -1,18 +1,10 @@
-#include <errno.h>
 #include <netdb.h>
-#include <netinet/in.h>
-#include <pthread.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <unistd.h>
 
-#include "io.h"
-#include "myutil.h"
-
-// ---------- handler function prototypes ---------- //
-void *handle_send(void *arg);
-void *handle_receive(void *arg);
+#include "client_h/receive.h"
+#include "client_h/send.h"
+#include "common/io.h"
+#include "common/myutil.h"
 
 // ---------- main function ---------- //
 int main(int argc, char *argv[]) {
@@ -102,53 +94,4 @@ int main(int argc, char *argv[]) {
   }
   close(sock);
   exit(EXIT_SUCCESS);
-}
-
-// ---------- handler function implementations ---------- //
-// 送信用
-void *handle_send(void *arg) {
-  int *sock = (int *) arg;
-  char buffer[BUFSIZE];
-
-  while (true) {
-    // 入力を受け取る
-    memset(buffer, '\0', BUFSIZE);
-    fgets(buffer, BUFSIZE, stdin);
-    chop(buffer);
-
-    // 送信する
-    send(*sock, buffer, BUFSIZE, 0);
-
-    // 一行戻し、行を削除
-    printf("\033[1A\033[2K");
-
-    // 終了判定は受信側で行う
-  }
-  pthread_exit(NULL);
-}
-
-// 受信用
-void *handle_receive(void *arg) {
-  int *sock = (int *) arg;
-  char buffer[BUFSIZE];
-  while (true) {
-    // 受信
-    memset(buffer, '\0', BUFSIZE);
-    recv(*sock, buffer, BUFSIZE, 0);
-
-    // ユーザー名を下線付きで表示
-    printf("\r%s%s%s\n", FONT_UNDERLINED, decode_username(buffer), FONT_RESET);
-    // メッセージを表示
-    printf(">> %s\n", decode_message(buffer));
-    // プロンプトを表示
-    printf("\n\r> ");
-    fflush(stdout);
-
-    // 終了判定
-    if (is_equal_str(decode_message(buffer), "quit")) {
-      printf("%sinfo%s quit\n", FONT_CYAN, FONT_RESET);
-      break;
-    }
-  }
-  pthread_exit(NULL);
 }
