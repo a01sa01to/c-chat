@@ -119,11 +119,10 @@ void *handle_send(void *arg) {
     // 送信する
     send(*sock, buffer, BUFSIZE, 0);
 
-    // 終了判定 (to be removed)
-    if (is_equal_str(buffer, "quit")) break;
+    // 一行戻し、行を削除
+    printf("\033[1A\033[2K");
 
-    // プロンプトを表示 (to be removed)
-    printf("> ");
+    // 終了判定は受信側で行う
   }
   pthread_exit(NULL);
 }
