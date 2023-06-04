@@ -21,6 +21,7 @@ typedef struct {
   char name[NAME_LEN];
   pthread_t send_thread, recv_thread;
   int id;
+  int last_message_id;
   bool send_created, recv_created;
   bool send_terminated, recv_terminated;
 } client_t;
@@ -30,6 +31,16 @@ typedef struct {
   client_t *clients;
   int *listening_socket;
 } client_handler_arg;
+
+typedef struct {
+  char *buf;
+  int *num_clients;
+  int sender_id;
+  int message_id;
+} message_state;
+
+// ---------- global variables ---------- //
+message_state message = { NULL, NULL, -1, -1 };
 
 // ---------- handler function prototypes ---------- //
 void *handle_client(void *arg);
@@ -90,6 +101,7 @@ int main(int argc, char *argv[]) {
     clients[i].send_thread = (pthread_t) { 0 };
     clients[i].recv_thread = (pthread_t) { 0 };
     clients[i].id = -1;
+    clients[i].last_message_id = -1;
     clients[i].send_created = false;
     clients[i].recv_created = false;
     clients[i].send_terminated = false;
@@ -207,11 +219,11 @@ void *handle_client(void *arg) {
     printf("%sinfo%s number of clients: %d/%d\n", FONT_CYAN, FONT_RESET, *num_clients, MAX_CLIENTS);
 
     // スレッドの作成
-    if (pthread_create(send_thread, NULL, handle_send, (void *) &client->sock) != 0) {
+    if (pthread_create(send_thread, NULL, handle_send, (void *) client) != 0) {
       printf("%serror%s sender thread creation failed\n", FONT_RED, FONT_RESET);
       exit(EXIT_FAILURE);
     }
-    if (pthread_create(receive_thread, NULL, handle_receive, (void *) &client->sock) != 0) {
+    if (pthread_create(receive_thread, NULL, handle_receive, (void *) client) != 0) {
       printf("%serror%s receiver thread creation failed\n", FONT_RED, FONT_RESET);
       exit(EXIT_FAILURE);
     }
@@ -229,7 +241,7 @@ void *handle_client(void *arg) {
 
 // 送信用
 void *handle_send(void *arg) {
-  int *sock = (int *) arg;
+  client_t *client = (client_t *) arg;
   char buffer[BUFSIZE];
 
   while (true) {
@@ -239,7 +251,7 @@ void *handle_send(void *arg) {
     chop(buffer);
 
     // 送信する
-    send(*sock, encode("anonymous", buffer), BUFSIZE, 0);
+    send(client->sock, encode("anonymous", buffer), BUFSIZE, 0);
 
     // 終了判定 (to be removed)
     if (is_equal_str(buffer, "quit")) break;
@@ -252,12 +264,12 @@ void *handle_send(void *arg) {
 
 // 受信用
 void *handle_receive(void *arg) {
-  int *sock = (int *) arg;
+  client_t *client = (client_t *) arg;
   char buffer[BUFSIZE];
   while (true) {
     // 受信
     memset(buffer, '\0', BUFSIZE);
-    recv(*sock, buffer, BUFSIZE, 0);
+    recv(client->sock, buffer, BUFSIZE, 0);
 
     // ユーザー名を下線付きで表示
     printf("\r%s%s%s\n", FONT_UNDERLINED, decode_username(buffer), FONT_RESET);
