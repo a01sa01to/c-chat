@@ -22,6 +22,7 @@ typedef struct {
   char name[NAME_LEN];
   pthread_t send_thread, recv_thread;
   int id;
+  bool send_created, recv_created;
   bool send_terminated, recv_terminated;
 } client_t;
 
@@ -80,6 +81,19 @@ int main(int argc, char *argv[]) {
 
   client_t clients[MAX_CLIENTS];
   int num_clients = 0;
+  // 初期化
+  for (int i = 0; i < MAX_CLIENTS; i++) {
+    clients[i].addr = (struct sockaddr_in) { 0 };
+    clients[i].sock = -1;
+    clients[i].name[0] = '\0';
+    clients[i].send_thread = (pthread_t) { 0 };
+    clients[i].recv_thread = (pthread_t) { 0 };
+    clients[i].id = -1;
+    clients[i].send_created = false;
+    clients[i].recv_created = false;
+    clients[i].send_terminated = false;
+    clients[i].recv_terminated = false;
+  }
 
   // クライアント接続スレッド
   pthread_t client_handler;
@@ -89,15 +103,79 @@ int main(int argc, char *argv[]) {
     exit(EXIT_FAILURE);
   }
 
-  pthread_join(client_handler, NULL);
+  // 各スレッドの監視
+  bool client_handler_terminated = false;
+  while (true) {
+    // 終了しているか確認
+    bool all_terminated = client_handler_terminated;
+    for (int i = 0; i < num_clients; i++) {
+      if ((clients[i].send_created && !clients[i].send_terminated) || (clients[i].recv_created && !clients[i].recv_terminated)) {
+        all_terminated = false;
+        break;
+      }
+    }
+    if (all_terminated) {
+      printf("%ssuccess%s all threads terminated\n", FONT_GREEN, FONT_RESET);
+      break;
+    }
+
+    // どれかが終了しているかチェック
+    bool any_terminated = client_handler_terminated;
+    for (int i = 0; i < num_clients; i++) {
+      if (clients[i].send_terminated || clients[i].recv_terminated) {
+        any_terminated = true;
+        break;
+      }
+    }
+
+    // 最新の状態に更新する
+    if (!client_handler_terminated) {
+      if (pthread_tryjoin_np(client_handler, NULL) == 0) {
+        client_handler_terminated = true;
+        printf("%ssuccess%s client handler thread terminated\n", FONT_GREEN, FONT_RESET);
+      }
+    }
+    for (int i = 0; i < num_clients; i++) {
+      if (clients[i].send_created && !clients[i].send_terminated) {
+        if (pthread_tryjoin_np(clients[i].send_thread, NULL) == 0) {
+          clients[i].send_terminated = true;
+          printf("%ssuccess%s send thread for client %d terminated\n", FONT_GREEN, FONT_RESET, clients[i].id);
+        }
+      }
+      if (clients[i].recv_created && !clients[i].recv_terminated) {
+        if (pthread_tryjoin_np(clients[i].recv_thread, NULL) == 0) {
+          clients[i].recv_terminated = true;
+          printf("%ssuccess%s recv thread for client %d terminated\n", FONT_GREEN, FONT_RESET, clients[i].id);
+        }
+      }
+    }
+
+    // もしどれかが終了していたら終了処理
+    if (any_terminated) {
+      if (!client_handler_terminated) {
+        if (pthread_cancel(client_handler) != 0) {
+          printf("%serror%s failed to cancel client handler thread\n", FONT_RED, FONT_RESET);
+        }
+      }
+
+      for (int i = 0; i < num_clients; i++) {
+        if (clients[i].send_created && !clients[i].send_terminated) {
+          if (pthread_cancel(clients[i].send_thread) != 0) {
+            printf("%serror%s failed to cancel send thread for client %d\n", FONT_RED, FONT_RESET, clients[i].id);
+          }
+        }
+        if (clients[i].recv_created && !clients[i].recv_terminated) {
+          if (pthread_cancel(clients[i].recv_thread) != 0) {
+            printf("%serror%s failed to cancel recv thread for client %d\n", FONT_RED, FONT_RESET, clients[i].id);
+          }
+        }
+      }
+    }
+  }
 
   // 終了処理
   printf("%sinfo%s closing server...\n", FONT_CYAN, FONT_RESET);
   close(listening_socket);
-  for (int i = 0; i < num_clients; i++) pthread_join(clients[i].send_thread, NULL);
-  printf("%ssuccess%s send threads joined\n", FONT_GREEN, FONT_RESET);
-  for (int i = 0; i < num_clients; i++) pthread_join(clients[i].recv_thread, NULL);
-  printf("%ssuccess%s receive threads joined\n", FONT_GREEN, FONT_RESET);
   for (int i = 0; i < num_clients; i++) close(clients[i].sock);
   printf("%ssuccess%s sockets closed\n", FONT_GREEN, FONT_RESET);
   exit(EXIT_SUCCESS);
@@ -117,7 +195,6 @@ void *handle_client(void *arg) {
     client->id = *num_clients;
     (*num_clients)++;
 
-    memset((void *) client, 0, sizeof(*client));
     client->sock = accept(*listening_socket, (struct sockaddr *) &client->addr, &(socklen_t) { sizeof(client->addr) });
     if (client->sock == -1) {
       printf("%serror%s accept failed\n", FONT_RED, FONT_RESET);
@@ -137,6 +214,8 @@ void *handle_client(void *arg) {
       printf("%serror%s receiver thread creation failed\n", FONT_RED, FONT_RESET);
       exit(EXIT_FAILURE);
     }
+    client->send_created = true;
+    client->recv_created = true;
 
     // もしクライアントが最大数に達したら終了
     if (*num_clients == MAX_CLIENTS) {
