@@ -97,7 +97,7 @@ int main(int argc, char *argv[]) {
   for (int i = 0; i < MAX_CLIENTS; i++) {
     clients[i].addr = (struct sockaddr_in) { 0 };
     clients[i].sock = -1;
-    clients[i].name[0] = '\0';
+    strcpy(clients[i].name, "anonymous");
     clients[i].send_thread = (pthread_t) { 0 };
     clients[i].recv_thread = (pthread_t) { 0 };
     clients[i].id = -1;
@@ -272,15 +272,15 @@ void *handle_receive(void *arg) {
     recv(client->sock, buffer, BUFSIZE, 0);
 
     // ユーザー名を下線付きで表示
-    printf("\r%s%s%s\n", FONT_UNDERLINED, decode_username(buffer), FONT_RESET);
+    printf("\r%s%s%s\n", FONT_UNDERLINED, client->name, FONT_RESET);
     // メッセージを表示
-    printf(">> %s\n", decode_message(buffer));
+    printf(">> %s\n", buffer);
     // プロンプトを表示
     printf("\n\r> ");
     fflush(stdout);
 
     // 終了判定
-    if (is_equal_str(decode_message(buffer), "quit")) {
+    if (is_equal_str(buffer, "quit")) {
       printf("%sinfo%s quit\n", FONT_CYAN, FONT_RESET);
       break;
     }

@@ -117,7 +117,7 @@ void *handle_send(void *arg) {
     chop(buffer);
 
     // 送信する
-    send(*sock, encode("anonymous", buffer), BUFSIZE, 0);
+    send(*sock, buffer, BUFSIZE, 0);
 
     // 終了判定 (to be removed)
     if (is_equal_str(buffer, "quit")) break;
