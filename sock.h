@@ -32,7 +32,7 @@ void *handle_send(void *arg) {
     int ret = select(FD_SETSIZE, &fds, NULL, NULL, &tv);
     if (ret == -1) {
       printf("%serror%s select failed\n", FONT_RED, FONT_RESET);
-      exit(1);
+      exit(EXIT_FAILURE);
     }
     else if (ret != 0 && FD_ISSET(0, &fds)) {
       memset(buffer, '\0', BUFSIZE);

@@ -13,20 +13,20 @@
 int main(int argc, char *argv[]) {
   if (argc != 3) {
     printf("%sinfo%s usage: %s <host> <port>\n", FONT_CYAN, FONT_RESET, argv[0]);
-    return 1;
+    exit(EXIT_FAILURE);
   }
   char *host = argv[1];
   int port = str2portNum(argv[2]);
   if (port == -1) {
     printf("%serror%s invalid port number: %s\n", FONT_RED, FONT_RESET, argv[2]);
-    return 1;
+    exit(EXIT_FAILURE);
   }
   printf("%sinfo%s connecting to %s:%d\n", FONT_CYAN, FONT_RESET, host, port);
 
   struct hostent *hostent = gethostbyname(host);
   if (hostent == NULL) {
     printf("%serror%s gethostbyname failed", FONT_RED, FONT_RESET);
-    return 1;
+    exit(EXIT_FAILURE);
   }
 
   struct sockaddr_in server;
@@ -39,11 +39,11 @@ int main(int argc, char *argv[]) {
   client.sock = socket(PF_INET, SOCK_STREAM, 0);
   if (client.sock == -1) {
     printf("%serror%s socket creation failed", FONT_RED, FONT_RESET);
-    return 1;
+    exit(EXIT_FAILURE);
   }
   if (connect(client.sock, (struct sockaddr *) &server, sizeof(server)) == -1) {
     printf("%serror%s connect failed", FONT_RED, FONT_RESET);
-    return 1;
+    exit(EXIT_FAILURE);
   }
 
   printf("%sinfo%s connected\n", FONT_CYAN, FONT_RESET);
@@ -54,11 +54,11 @@ int main(int argc, char *argv[]) {
   pthread_t send_thread, receive_thread;
   if (pthread_create(&send_thread, NULL, handle_send, (void *) &client) != 0) {
     printf("%serror%s sender pthread_create failed", FONT_RED, FONT_RESET);
-    return 1;
+    exit(EXIT_FAILURE);
   }
   if (pthread_create(&receive_thread, NULL, handle_receive, (void *) &client) != 0) {
     printf("%serror%s receiver pthread_create failed", FONT_RED, FONT_RESET);
-    return 1;
+    exit(EXIT_FAILURE);
   }
 
   // join thread
@@ -70,5 +70,5 @@ int main(int argc, char *argv[]) {
   }
 
   close(client.sock);
-  return 0;
+  exit(EXIT_SUCCESS);
 }
