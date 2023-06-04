@@ -57,6 +57,9 @@ int main(int argc, char *argv[]) {
 
   printf("%sinfo%s connected\n", COLOR_CYAN, COLOR_RESET);
 
+  // todo
+  send(sock, "quit", 4, 0);
+
   return 0;
 }
 

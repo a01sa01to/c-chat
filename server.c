@@ -8,6 +8,7 @@
 
 #include "io.h"
 #include "myutil.h"
+#include "sock.h"
 
 // todo
 // - ./server <port>
@@ -16,14 +17,6 @@
 // - quit で終了する
 // - 複数クライアントに対応する
 // - ユーザー名の管理
-
-void *handle_send(void *arg);
-void *handle_receive(void *arg);
-
-typedef struct {
-  struct sockaddr_in addr;
-  int sock;
-} client_t;
 
 int main(int argc, char *argv[]) {
   // Input validation
@@ -98,16 +91,4 @@ int main(int argc, char *argv[]) {
     printf("%serror%s receiver pthread_join failed", COLOR_RED, COLOR_RESET);
   }
   return 0;
-}
-
-void *handle_send(void *arg) {
-  // todo
-  printf("handle_send\n");
-  pthread_exit(NULL);
-}
-
-void *handle_receive(void *arg) {
-  // todo
-  printf("handle_receive\n");
-  pthread_exit(NULL);
 }

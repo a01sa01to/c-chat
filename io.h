@@ -11,3 +11,5 @@ const char* COLOR_CYAN = "\033[36m";
 const char* COLOR_UNDERLINED = "\033[4m";
 const char* COLOR_BOLD = "\033[1m";
 const char* COLOR_RESET = "\033[0m";
+
+const int BUFSIZE = 1024;
