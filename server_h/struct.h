@@ -25,9 +25,3 @@ typedef struct {
   bool send_terminated, recv_terminated;
   message_state *msg;
 } client_t;
-
-typedef struct {
-  int *num_clients;
-  client_t *clients;
-  int *listening_socket;
-} client_handler_arg;

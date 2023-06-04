@@ -9,6 +9,12 @@
 
 #define MAX_CLIENTS 10
 
+typedef struct {
+  int *num_clients;
+  client_t *clients;
+  int *listening_socket;
+} client_handler_arg;
+
 void *handle_client(void *arg) {
   client_t *clients = ((client_handler_arg *) arg)->clients;
   int *num_clients = ((client_handler_arg *) arg)->num_clients;
