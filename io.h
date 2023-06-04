@@ -4,7 +4,7 @@
 
 const char* FONT_RED = "\033[31m";
 const char* FONT_GREEN = "\033[32m";
-const char* FONT_BROWN = "\033[33m";
+const char* FONT_YELLOW = "\033[33m";
 const char* FONT_BLUE = "\033[34m";
 const char* FONT_PURPLE = "\033[35m";
 const char* FONT_CYAN = "\033[36m";

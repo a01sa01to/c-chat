@@ -1,3 +1,4 @@
+// ---------- includes ---------- //
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <pthread.h>
@@ -10,6 +11,16 @@
 #include "myutil.h"
 #include "sock.h"
 
+// ---------- global variables ---------- //
+#define MAX_CLIENTS 10
+
+// ---------- structs ---------- //
+typedef struct {
+  struct sockaddr_in addr;
+  int sock;
+} client_t;
+
+// ---------- main ---------- //
 int main(int argc, char *argv[]) {
   // Input validation
   if (argc != 2) {
@@ -47,42 +58,55 @@ int main(int argc, char *argv[]) {
     printf("%serror%s bind failed", FONT_RED, FONT_RESET);
     exit(EXIT_FAILURE);
   }
-
   // Listen
-  if (listen(listening_socket, 5) == -1) {
+  if (listen(listening_socket, MAX_CLIENTS) == -1) {
     printf("%serror%s listen failed", FONT_RED, FONT_RESET);
     exit(EXIT_FAILURE);
   }
-  client_t client;
-  memset((void *) &client, 0, sizeof(client));
-  client.sock = accept(listening_socket, (struct sockaddr *) &client.addr, &(socklen_t) { sizeof(client.addr) });
-  if (client.sock == -1) {
-    printf("%serror%s accept failed", FONT_RED, FONT_RESET);
-    exit(EXIT_FAILURE);
-  }
 
-  printf("%sinfo%s connected from %s:%d\n", FONT_CYAN, FONT_RESET, inet_ntoa(client.addr.sin_addr), ntohs(client.addr.sin_port));
+  client_t clients[MAX_CLIENTS];
+  pthread_t send_threads[MAX_CLIENTS], recv_threads[MAX_CLIENTS];
+  int num_clients = 0;
+
+  while (true) {
+    // accept
+    client_t *client = &clients[num_clients];
+    pthread_t *send_thread = &send_threads[num_clients];
+    pthread_t *receive_thread = &recv_threads[num_clients];
+    num_clients++;
+
+    memset((void *) client, 0, sizeof(*client));
+    client->sock = accept(listening_socket, (struct sockaddr *) &client->addr, &(socklen_t) { sizeof(client->addr) });
+    if (client->sock == -1) {
+      printf("%serror%s accept failed", FONT_RED, FONT_RESET);
+      exit(EXIT_FAILURE);
+    }
+    printf("%sinfo%s new connection from %s:%d\n", FONT_CYAN, FONT_RESET, inet_ntoa(client->addr.sin_addr), ntohs(client->addr.sin_port));
+
+    if (pthread_create(send_thread, NULL, handle_send, (void *) &client->sock) != 0) {
+      printf("%serror%s send thread create failed", FONT_RED, FONT_RESET);
+      exit(EXIT_FAILURE);
+    }
+    if (pthread_create(receive_thread, NULL, handle_receive, (void *) &client->sock) != 0) {
+      printf("%serror%s receive thread create failed", FONT_RED, FONT_RESET);
+      exit(EXIT_FAILURE);
+    }
+
+    if (num_clients == MAX_CLIENTS) {
+      printf("%swarn%s max clients reached\n", FONT_YELLOW, FONT_RESET);
+      break;
+    }
+  }
   close(listening_socket);
-
-  // create thread
-  pthread_t send_thread, receive_thread;
-  if (pthread_create(&send_thread, NULL, handle_send, (void *) &client) != 0) {
-    printf("%serror%s sender pthread_create failed", FONT_RED, FONT_RESET);
-    exit(EXIT_FAILURE);
-  }
-  if (pthread_create(&receive_thread, NULL, handle_receive, (void *) &client) != 0) {
-    printf("%serror%s receiver pthread_create failed", FONT_RED, FONT_RESET);
-    exit(EXIT_FAILURE);
-  }
-
-  // join thread
-  if (pthread_join(send_thread, NULL) != 0) {
-    printf("%serror%s sender pthread_join failed", FONT_RED, FONT_RESET);
-  }
-  if (pthread_join(receive_thread, NULL) != 0) {
-    printf("%serror%s receiver pthread_join failed", FONT_RED, FONT_RESET);
-  }
-
-  close(client.sock);
+  printf("%sinfo%s closing server\n", FONT_CYAN, FONT_RESET);
+  for (int i = 0; i < num_clients; i++) pthread_join(send_threads[i], NULL);
+  printf("%ssuccess%s send threads joined\n", FONT_GREEN, FONT_RESET);
+  for (int i = 0; i < num_clients; i++) pthread_join(recv_threads[i], NULL);
+  printf("%ssuccess%s receive threads joined\n", FONT_GREEN, FONT_RESET);
+  for (int i = 0; i < num_clients; i++) close(clients[i].sock);
+  printf("%ssuccess%s sockets closed\n", FONT_GREEN, FONT_RESET);
   exit(EXIT_SUCCESS);
+}
+
+void *handle_client(void *arg) {
 }
