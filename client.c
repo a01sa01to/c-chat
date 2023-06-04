@@ -36,13 +36,13 @@ int main(int argc, char *argv[]) {
   server.sin_port = htons(port);
   memcpy((void *) &server.sin_addr, (void *) hostent->h_addr, hostent->h_length);
 
-  client_t client;
-  client.sock = socket(PF_INET, SOCK_STREAM, 0);
-  if (client.sock == -1) {
+  int sock;
+  sock = socket(PF_INET, SOCK_STREAM, 0);
+  if (sock == -1) {
     printf("%serror%s socket creation failed", FONT_RED, FONT_RESET);
     exit(EXIT_FAILURE);
   }
-  if (connect(client.sock, (struct sockaddr *) &server, sizeof(server)) == -1) {
+  if (connect(sock, (struct sockaddr *) &server, sizeof(server)) == -1) {
     printf("%serror%s connect failed", FONT_RED, FONT_RESET);
     exit(EXIT_FAILURE);
   }
@@ -55,11 +55,11 @@ int main(int argc, char *argv[]) {
 
   // create thread
   pthread_t send_thread, receive_thread;
-  if (pthread_create(&send_thread, NULL, handle_send, (void *) &client) != 0) {
+  if (pthread_create(&send_thread, NULL, handle_send, (void *) &sock) != 0) {
     printf("%serror%s sender pthread_create failed", FONT_RED, FONT_RESET);
     exit(EXIT_FAILURE);
   }
-  if (pthread_create(&receive_thread, NULL, handle_receive, (void *) &client) != 0) {
+  if (pthread_create(&receive_thread, NULL, handle_receive, (void *) &sock) != 0) {
     printf("%serror%s receiver pthread_create failed", FONT_RED, FONT_RESET);
     exit(EXIT_FAILURE);
   }
@@ -84,6 +84,6 @@ int main(int argc, char *argv[]) {
       if (!sender_terminated && pthread_cancel(send_thread) != 0) printf("%serror%s sender pthread_cancel failed", FONT_RED, FONT_RESET);
     }
   }
-  close(client.sock);
+  close(sock);
   exit(EXIT_SUCCESS);
 }

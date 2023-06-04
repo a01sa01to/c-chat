@@ -5,20 +5,15 @@
 
 #include "io.h"
 
-typedef struct {
-  struct sockaddr_in addr;
-  int sock;
-} client_t;
-
 void *handle_send(void *arg) {
-  client_t *client = (client_t *) arg;
+  int *sock = (int *) arg;
   char buffer[BUFSIZE];
 
   while (true) {
     memset(buffer, '\0', BUFSIZE);
     fgets(buffer, BUFSIZE, stdin);
     chop(buffer);
-    send(client->sock, encode("anonymous", buffer), BUFSIZE, 0);
+    send(*sock, encode("anonymous", buffer), BUFSIZE, 0);
     if (is_equal_str(buffer, "quit")) {
       break;
     }
@@ -30,11 +25,11 @@ void *handle_send(void *arg) {
 }
 
 void *handle_receive(void *arg) {
-  client_t *client = (client_t *) arg;
+  int *sock = (int *) arg;
   char buffer[BUFSIZE];
   while (true) {
     memset(buffer, '\0', BUFSIZE);
-    recv(client->sock, buffer, BUFSIZE, 0);
+    recv(*sock, buffer, BUFSIZE, 0);
     printf("\r%s%s%s\n", FONT_UNDERLINED, decode_username(buffer), FONT_RESET);
     printf(">> %s\n\n", decode_message(buffer));
     printf("\r> ");
