@@ -1,3 +1,4 @@
+#include <errno.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <pthread.h>
@@ -63,14 +64,26 @@ int main(int argc, char *argv[]) {
     exit(EXIT_FAILURE);
   }
 
-  // join thread
-  if (pthread_join(send_thread, NULL) != 0) {
-    printf("%serror%s sender pthread_join failed", FONT_RED, FONT_RESET);
-  }
-  if (pthread_join(receive_thread, NULL) != 0) {
-    printf("%serror%s receiver pthread_join failed", FONT_RED, FONT_RESET);
-  }
+  // watch thread
+  bool sender_terminated = false, receiver_terminated = false;
+  while (true) {
+    if (sender_terminated && receiver_terminated) break;
 
+    // sender
+    if (pthread_tryjoin_np(send_thread, NULL) == 0) {
+      sender_terminated = true;
+      printf("%ssuccess%s sender pthread_join was terminated\n", FONT_GREEN, FONT_RESET);
+      printf("%sinfo%s trying to terminate receiver thread\n", FONT_CYAN, FONT_RESET);
+      if (!receiver_terminated && pthread_cancel(receive_thread) != 0) printf("%serror%s receiver pthread_cancel failed", FONT_RED, FONT_RESET);
+    }
+    // receiver
+    if (pthread_tryjoin_np(receive_thread, NULL) == 0) {
+      receiver_terminated = true;
+      printf("%ssuccess%s receiver pthread_join success\n", FONT_GREEN, FONT_RESET);
+      printf("%sinfo%s trying to terminate sender thread\n", FONT_CYAN, FONT_RESET);
+      if (!sender_terminated && pthread_cancel(send_thread) != 0) printf("%serror%s sender pthread_cancel failed", FONT_RED, FONT_RESET);
+    }
+  }
   close(client.sock);
   exit(EXIT_SUCCESS);
 }
