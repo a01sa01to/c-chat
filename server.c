@@ -25,6 +25,15 @@ typedef struct {
   bool send_terminated, recv_terminated;
 } client_t;
 
+typedef struct {
+  int *num_clients;
+  client_t *clients;
+  int *listening_socket;
+} client_handler_arg;
+
+// ---------- prototypes ---------- //
+void *handle_client(void *arg);
+
 // ---------- main ---------- //
 int main(int argc, char *argv[]) {
   // まずはコマンドが正しく入力されているかを確認する
@@ -72,16 +81,44 @@ int main(int argc, char *argv[]) {
   client_t clients[MAX_CLIENTS];
   int num_clients = 0;
 
+  // クライアント接続スレッド
+  pthread_t client_handler;
+  client_handler_arg client_handler_arg = { &num_clients, clients, &listening_socket };
+  if (pthread_create(&client_handler, NULL, handle_client, &client_handler_arg)) {
+    printf("%serror%s failed to create client handler thread\n", FONT_RED, FONT_RESET);
+    exit(EXIT_FAILURE);
+  }
+
+  pthread_join(client_handler, NULL);
+
+  // 終了処理
+  printf("%sinfo%s closing server...\n", FONT_CYAN, FONT_RESET);
+  close(listening_socket);
+  for (int i = 0; i < num_clients; i++) pthread_join(clients[i].send_thread, NULL);
+  printf("%ssuccess%s send threads joined\n", FONT_GREEN, FONT_RESET);
+  for (int i = 0; i < num_clients; i++) pthread_join(clients[i].recv_thread, NULL);
+  printf("%ssuccess%s receive threads joined\n", FONT_GREEN, FONT_RESET);
+  for (int i = 0; i < num_clients; i++) close(clients[i].sock);
+  printf("%ssuccess%s sockets closed\n", FONT_GREEN, FONT_RESET);
+  exit(EXIT_SUCCESS);
+}
+
+// ---------- function implementations ---------- //
+void *handle_client(void *arg) {
+  client_t *clients = ((client_handler_arg *) arg)->clients;
+  int *num_clients = ((client_handler_arg *) arg)->num_clients;
+  int *listening_socket = ((client_handler_arg *) arg)->listening_socket;
+
   while (true) {
     // クライアントの接続を待つ
-    client_t *client = &clients[num_clients];
+    client_t *client = &clients[*num_clients];
     pthread_t *send_thread = &client->send_thread;
     pthread_t *receive_thread = &client->recv_thread;
-    client->id = num_clients;
-    num_clients++;
+    client->id = *num_clients;
+    (*num_clients)++;
 
     memset((void *) client, 0, sizeof(*client));
-    client->sock = accept(listening_socket, (struct sockaddr *) &client->addr, &(socklen_t) { sizeof(client->addr) });
+    client->sock = accept(*listening_socket, (struct sockaddr *) &client->addr, &(socklen_t) { sizeof(client->addr) });
     if (client->sock == -1) {
       printf("%serror%s accept failed\n", FONT_RED, FONT_RESET);
       exit(EXIT_FAILURE);
@@ -89,7 +126,7 @@ int main(int argc, char *argv[]) {
 
     // クライアント接続された
     printf("%sinfo%s new connection from %s:%d\n", FONT_CYAN, FONT_RESET, inet_ntoa(client->addr.sin_addr), ntohs(client->addr.sin_port));
-    printf("%sinfo%s number of clients: %d/%d\n", FONT_CYAN, FONT_RESET, num_clients, MAX_CLIENTS);
+    printf("%sinfo%s number of clients: %d/%d\n", FONT_CYAN, FONT_RESET, *num_clients, MAX_CLIENTS);
 
     // スレッドの作成
     if (pthread_create(send_thread, NULL, handle_send, (void *) &client->sock) != 0) {
@@ -102,20 +139,10 @@ int main(int argc, char *argv[]) {
     }
 
     // もしクライアントが最大数に達したら終了
-    if (num_clients == MAX_CLIENTS) {
+    if (*num_clients == MAX_CLIENTS) {
       printf("%swarn%s max clients reached\n", FONT_YELLOW, FONT_RESET);
       break;
     }
   }
-
-  // 終了処理
-  printf("%sinfo%s closing server...\n", FONT_CYAN, FONT_RESET);
-  close(listening_socket);
-  for (int i = 0; i < num_clients; i++) pthread_join(clients[i].send_thread, NULL);
-  printf("%ssuccess%s send threads joined\n", FONT_GREEN, FONT_RESET);
-  for (int i = 0; i < num_clients; i++) pthread_join(clients[i].recv_thread, NULL);
-  printf("%ssuccess%s receive threads joined\n", FONT_GREEN, FONT_RESET);
-  for (int i = 0; i < num_clients; i++) close(clients[i].sock);
-  printf("%ssuccess%s sockets closed\n", FONT_GREEN, FONT_RESET);
-  exit(EXIT_SUCCESS);
+  pthread_exit(NULL);
 }
