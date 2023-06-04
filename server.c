@@ -33,14 +33,14 @@ typedef struct {
 } client_handler_arg;
 
 typedef struct {
-  char *buf;
-  char *sender_name;
+  char content[BUFSIZE];
+  char sender_name[NAME_LEN];
   int sender_id;
   int message_id;
 } message_state;
 
 // ---------- global variables ---------- //
-message_state message = { NULL, NULL, -1, -1 };
+message_state message;
 
 // ---------- handler function prototypes ---------- //
 void *handle_client(void *arg);
@@ -60,6 +60,12 @@ int main(int argc, char *argv[]) {
     exit(EXIT_FAILURE);
   }
   printf("%sinfo%s listening on port %d\n", FONT_CYAN, FONT_RESET, port);
+
+  // グローバル変数の初期化
+  memset(message.content, '\0', BUFSIZE);
+  memset(message.sender_name, '\0', NAME_LEN);
+  message.sender_id = -1;
+  message.message_id = -1;
 
   // listening socketの作成
   int listening_socket = socket(PF_INET, SOCK_STREAM, 0);
@@ -245,19 +251,23 @@ void *handle_send(void *arg) {
   char buffer[BUFSIZE];
 
   while (true) {
-    // 入力を受け取る
+    // 送信するべきデータがない場合は待機
+    if (message.message_id == client->last_message_id) continue;
+
+    // 送信データの構築
     memset(buffer, '\0', BUFSIZE);
-    fgets(buffer, BUFSIZE, stdin);
-    chop(buffer);
+    if (message.sender_id == client->id) {
+      sprintf(buffer, "%s%s%s%s\n%s", message.sender_name, FONT_BOLD, " (me)", FONT_RESET, message.content);
+    }
+    else {
+      sprintf(buffer, "%s\n%s", message.sender_name, message.content);
+    }
 
     // 送信する
-    send(client->sock, encode("anonymous", buffer), BUFSIZE, 0);
+    send(client->sock, buffer, BUFSIZE, 0);
 
-    // 終了判定 (to be removed)
-    if (is_equal_str(buffer, "quit")) break;
-
-    // プロンプトを表示 (to be removed)
-    printf("> ");
+    // 送信したメッセージのIDを更新
+    client->last_message_id = message.message_id;
   }
   pthread_exit(NULL);
 }
@@ -274,26 +284,24 @@ void *handle_receive(void *arg) {
     // ユーザー名を下線付きで表示
     printf("\r%s%s%s\n", FONT_UNDERLINED, client->name, FONT_RESET);
     // メッセージを表示
-    printf(">> %s\n", buffer);
-    // プロンプトを表示
-    printf("\n\r> ");
+    printf(">> %s\n\n", buffer);
     fflush(stdout);
-
-    // 終了判定
-    if (is_equal_str(buffer, "quit")) {
-      printf("%sinfo%s quit\n", FONT_CYAN, FONT_RESET);
-      break;
-    }
 
     // コマンドの処理
     if (buffer[0] == '/') {
     }
     // 通常のメッセージ
     else {
-      message.buf = buffer;
+      strcpy(message.content, buffer);
       message.sender_id = client->id;
-      message.sender_name = client->name;
+      strcpy(message.sender_name, client->name);
       message.message_id++;
+    }
+
+    // 終了判定
+    if (is_equal_str(buffer, "quit")) {
+      printf("%sinfo%s quit\n", FONT_CYAN, FONT_RESET);
+      break;
     }
   }
   pthread_exit(NULL);

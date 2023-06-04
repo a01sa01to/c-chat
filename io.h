@@ -13,7 +13,7 @@ const char* FONT_BOLD = "\033[1m";
 const char* FONT_RESET = "\033[0m";
 
 // Buffer サイズ
-const int BUFSIZE = 1024;
+#define BUFSIZE 1024
 
 // 改行コード削除
 void chop(char* str) {
@@ -30,16 +30,6 @@ char* sanitize(char* str) {
     ret[i] = str[i];
   }
   return ret;
-}
-
-// 名前とメッセージを結合
-char* encode(char* username, char* message) {
-  char* encoded = (char*) malloc(BUFSIZE);
-  memset(encoded, '\0', BUFSIZE);
-  strcat(encoded, sanitize(username));
-  strcat(encoded, "\n");
-  strcat(encoded, sanitize(message));
-  return encoded;
 }
 
 // 名前とメッセージを分離
