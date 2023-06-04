@@ -41,12 +41,12 @@ int main(int argc, char *argv[]) {
   // Create a socket
   int listening_socket = socket(PF_INET, SOCK_STREAM, 0);
   if (listening_socket == -1) {
-    printf("%serror%s socket creation failed", FONT_RED, FONT_RESET);
+    printf("%serror%s socket creation failed\n", FONT_RED, FONT_RESET);
     exit(EXIT_FAILURE);
   }
   // Socket option
   if (setsockopt(listening_socket, SOL_SOCKET, SO_REUSEADDR, &(int) { 1 }, sizeof(int))) {
-    printf("%serror%s socket option failed", FONT_RED, FONT_RESET);
+    printf("%serror%s socket option failed\n", FONT_RED, FONT_RESET);
     exit(EXIT_FAILURE);
   }
 
@@ -59,12 +59,12 @@ int main(int argc, char *argv[]) {
 
   // Bind
   if (bind(listening_socket, (struct sockaddr *) &server, sizeof(server)) == -1) {
-    printf("%serror%s bind failed", FONT_RED, FONT_RESET);
+    printf("%serror%s bind failed\n", FONT_RED, FONT_RESET);
     exit(EXIT_FAILURE);
   }
   // Listen
   if (listen(listening_socket, MAX_CLIENTS) == -1) {
-    printf("%serror%s listen failed", FONT_RED, FONT_RESET);
+    printf("%serror%s listen failed\n", FONT_RED, FONT_RESET);
     exit(EXIT_FAILURE);
   }
 
@@ -82,18 +82,18 @@ int main(int argc, char *argv[]) {
     memset((void *) client, 0, sizeof(*client));
     client->sock = accept(listening_socket, (struct sockaddr *) &client->addr, &(socklen_t) { sizeof(client->addr) });
     if (client->sock == -1) {
-      printf("%serror%s accept failed", FONT_RED, FONT_RESET);
+      printf("%serror%s accept failed\n", FONT_RED, FONT_RESET);
       exit(EXIT_FAILURE);
     }
     printf("%sinfo%s new connection from %s:%d\n", FONT_CYAN, FONT_RESET, inet_ntoa(client->addr.sin_addr), ntohs(client->addr.sin_port));
     printf("%sinfo%s number of clients: %d/%d\n", FONT_CYAN, FONT_RESET, num_clients, MAX_CLIENTS);
 
     if (pthread_create(send_thread, NULL, handle_send, (void *) &client->sock) != 0) {
-      printf("%serror%s send thread create failed", FONT_RED, FONT_RESET);
+      printf("%serror%s send thread create failed\n", FONT_RED, FONT_RESET);
       exit(EXIT_FAILURE);
     }
     if (pthread_create(receive_thread, NULL, handle_receive, (void *) &client->sock) != 0) {
-      printf("%serror%s receive thread create failed", FONT_RED, FONT_RESET);
+      printf("%serror%s receive thread create failed\n", FONT_RED, FONT_RESET);
       exit(EXIT_FAILURE);
     }
 

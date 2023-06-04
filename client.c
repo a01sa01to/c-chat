@@ -26,7 +26,7 @@ int main(int argc, char *argv[]) {
 
   struct hostent *hostent = gethostbyname(host);
   if (hostent == NULL) {
-    printf("%serror%s gethostbyname failed", FONT_RED, FONT_RESET);
+    printf("%serror%s gethostbyname failed\n", FONT_RED, FONT_RESET);
     exit(EXIT_FAILURE);
   }
 
@@ -39,11 +39,11 @@ int main(int argc, char *argv[]) {
   int sock;
   sock = socket(PF_INET, SOCK_STREAM, 0);
   if (sock == -1) {
-    printf("%serror%s socket creation failed", FONT_RED, FONT_RESET);
+    printf("%serror%s socket creation failed\n", FONT_RED, FONT_RESET);
     exit(EXIT_FAILURE);
   }
   if (connect(sock, (struct sockaddr *) &server, sizeof(server)) == -1) {
-    printf("%serror%s connect failed", FONT_RED, FONT_RESET);
+    printf("%serror%s connect failed\n", FONT_RED, FONT_RESET);
     exit(EXIT_FAILURE);
   }
 
@@ -56,11 +56,11 @@ int main(int argc, char *argv[]) {
   // create thread
   pthread_t send_thread, receive_thread;
   if (pthread_create(&send_thread, NULL, handle_send, (void *) &sock) != 0) {
-    printf("%serror%s sender pthread_create failed", FONT_RED, FONT_RESET);
+    printf("%serror%s sender pthread_create failed\n", FONT_RED, FONT_RESET);
     exit(EXIT_FAILURE);
   }
   if (pthread_create(&receive_thread, NULL, handle_receive, (void *) &sock) != 0) {
-    printf("%serror%s receiver pthread_create failed", FONT_RED, FONT_RESET);
+    printf("%serror%s receiver pthread_create failed\n", FONT_RED, FONT_RESET);
     exit(EXIT_FAILURE);
   }
 
@@ -75,7 +75,7 @@ int main(int argc, char *argv[]) {
       printf("%ssuccess%s sender pthread_join was terminated\n", FONT_GREEN, FONT_RESET);
       if (!receiver_terminated) {
         printf("%sinfo%s trying to terminate receiver thread\n", FONT_CYAN, FONT_RESET);
-        if (pthread_cancel(receive_thread) != 0) printf("%serror%s receiver pthread_cancel failed", FONT_RED, FONT_RESET);
+        if (pthread_cancel(receive_thread) != 0) printf("%serror%s receiver pthread_cancel failed\n", FONT_RED, FONT_RESET);
       }
     }
     // receiver
@@ -84,7 +84,7 @@ int main(int argc, char *argv[]) {
       printf("%ssuccess%s receiver pthread_join success\n", FONT_GREEN, FONT_RESET);
       if (!sender_terminated) {
         printf("%sinfo%s trying to terminate sender thread\n", FONT_CYAN, FONT_RESET);
-        if (pthread_cancel(send_thread) != 0) printf("%serror%s sender pthread_cancel failed", FONT_RED, FONT_RESET);
+        if (pthread_cancel(send_thread) != 0) printf("%serror%s sender pthread_cancel failed\n", FONT_RED, FONT_RESET);
       }
     }
   }
