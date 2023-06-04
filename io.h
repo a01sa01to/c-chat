@@ -18,3 +18,42 @@ void chop(char* str) {
   char* p = strchr(str, '\n');
   if (p != NULL) *p = '\0';
 }
+
+char* sanitize(char* str) {
+  char* ret = (char*) malloc(BUFSIZE);
+  memset(ret, '\0', BUFSIZE);
+  for (int i = 0; i < strlen(str); i++) {
+    if (str[i] == '\n') ret[i] = ' ';
+    ret[i] = str[i];
+  }
+  return ret;
+}
+
+char* encode(char* username, char* message) {
+  char* encoded = (char*) malloc(BUFSIZE);
+  memset(encoded, '\0', BUFSIZE);
+  strcat(encoded, sanitize(username));
+  strcat(encoded, "\n");
+  strcat(encoded, sanitize(message));
+  return encoded;
+}
+
+char* decode_username(char* encoded) {
+  char* username = (char*) malloc(BUFSIZE);
+  memset(username, '\0', BUFSIZE);
+  char* p = strchr(encoded, '\n');
+  if (p != NULL) {
+    strncpy(username, encoded, p - encoded);
+  }
+  return username;
+}
+
+char* decode_message(char* encoded) {
+  char* message = (char*) malloc(BUFSIZE);
+  memset(message, '\0', BUFSIZE);
+  char* p = strchr(encoded, '\n');
+  if (p != NULL) {
+    strcpy(message, p + 1);
+  }
+  return message;
+}
