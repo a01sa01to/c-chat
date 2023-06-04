@@ -1,7 +1,7 @@
 #pragma once
-
 #include <string.h>
 
+// フォント
 const char* FONT_RED = "\033[31m";
 const char* FONT_GREEN = "\033[32m";
 const char* FONT_YELLOW = "\033[33m";
@@ -12,13 +12,16 @@ const char* FONT_UNDERLINED = "\033[4m";
 const char* FONT_BOLD = "\033[1m";
 const char* FONT_RESET = "\033[0m";
 
+// Buffer サイズ
 const int BUFSIZE = 1024;
 
+// 改行コード削除
 void chop(char* str) {
   char* p = strchr(str, '\n');
   if (p != NULL) *p = '\0';
 }
 
+// 一応サニタイズ
 char* sanitize(char* str) {
   char* ret = (char*) malloc(BUFSIZE);
   memset(ret, '\0', BUFSIZE);
@@ -29,6 +32,7 @@ char* sanitize(char* str) {
   return ret;
 }
 
+// 名前とメッセージを結合
 char* encode(char* username, char* message) {
   char* encoded = (char*) malloc(BUFSIZE);
   memset(encoded, '\0', BUFSIZE);
@@ -38,6 +42,7 @@ char* encode(char* username, char* message) {
   return encoded;
 }
 
+// 名前とメッセージを分離
 char* decode_username(char* encoded) {
   char* username = (char*) malloc(BUFSIZE);
   memset(username, '\0', BUFSIZE);
@@ -47,7 +52,6 @@ char* decode_username(char* encoded) {
   }
   return username;
 }
-
 char* decode_message(char* encoded) {
   char* message = (char*) malloc(BUFSIZE);
   memset(message, '\0', BUFSIZE);
