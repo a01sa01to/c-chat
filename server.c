@@ -9,7 +9,6 @@
 
 #include "io.h"
 #include "myutil.h"
-#include "sock.h"
 
 // ---------- global variables ---------- //
 #define MAX_CLIENTS 10
@@ -32,8 +31,10 @@ typedef struct {
   int *listening_socket;
 } client_handler_arg;
 
-// ---------- prototypes ---------- //
+// ---------- handler function prototypes ---------- //
 void *handle_client(void *arg);
+void *handle_send(void *arg);
+void *handle_receive(void *arg);
 
 // ---------- main ---------- //
 int main(int argc, char *argv[]) {
@@ -181,7 +182,7 @@ int main(int argc, char *argv[]) {
   exit(EXIT_SUCCESS);
 }
 
-// ---------- function implementations ---------- //
+// ---------- handler function implementations ---------- //
 void *handle_client(void *arg) {
   client_t *clients = ((client_handler_arg *) arg)->clients;
   int *num_clients = ((client_handler_arg *) arg)->num_clients;
@@ -220,6 +221,55 @@ void *handle_client(void *arg) {
     // もしクライアントが最大数に達したら終了
     if (*num_clients == MAX_CLIENTS) {
       printf("%swarn%s max clients reached\n", FONT_YELLOW, FONT_RESET);
+      break;
+    }
+  }
+  pthread_exit(NULL);
+}
+
+// 送信用
+void *handle_send(void *arg) {
+  int *sock = (int *) arg;
+  char buffer[BUFSIZE];
+
+  while (true) {
+    // 入力を受け取る
+    memset(buffer, '\0', BUFSIZE);
+    fgets(buffer, BUFSIZE, stdin);
+    chop(buffer);
+
+    // 送信する
+    send(*sock, encode("anonymous", buffer), BUFSIZE, 0);
+
+    // 終了判定 (to be removed)
+    if (is_equal_str(buffer, "quit")) break;
+
+    // プロンプトを表示 (to be removed)
+    printf("> ");
+  }
+  pthread_exit(NULL);
+}
+
+// 受信用
+void *handle_receive(void *arg) {
+  int *sock = (int *) arg;
+  char buffer[BUFSIZE];
+  while (true) {
+    // 受信
+    memset(buffer, '\0', BUFSIZE);
+    recv(*sock, buffer, BUFSIZE, 0);
+
+    // ユーザー名を下線付きで表示
+    printf("\r%s%s%s\n", FONT_UNDERLINED, decode_username(buffer), FONT_RESET);
+    // メッセージを表示
+    printf(">> %s\n", decode_message(buffer));
+    // プロンプトを表示
+    printf("\n\r> ");
+    fflush(stdout);
+
+    // 終了判定
+    if (is_equal_str(decode_message(buffer), "quit")) {
+      printf("%sinfo%s quit\n", FONT_CYAN, FONT_RESET);
       break;
     }
   }
