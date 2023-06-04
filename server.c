@@ -1,51 +1,12 @@
 // ---------- includes ---------- //
-#include <arpa/inet.h>
-#include <netinet/in.h>
-#include <pthread.h>
-#include <stdbool.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <unistd.h>
 
-#include "io.h"
-#include "myutil.h"
-
-// ---------- global variables ---------- //
-#define MAX_CLIENTS 10
-#define NAME_LEN 20
-
-// ---------- structs ---------- //
-typedef struct {
-  struct sockaddr_in addr;
-  int sock;
-  char name[NAME_LEN];
-  pthread_t send_thread, recv_thread;
-  int id;
-  int last_message_id;
-  bool send_created, recv_created;
-  bool send_terminated, recv_terminated;
-} client_t;
-
-typedef struct {
-  int *num_clients;
-  client_t *clients;
-  int *listening_socket;
-} client_handler_arg;
-
-typedef struct {
-  char content[BUFSIZE];
-  char sender_name[NAME_LEN];
-  int sender_id;
-  int message_id;
-} message_state;
-
-// ---------- global variables ---------- //
-message_state message;
-
-// ---------- handler function prototypes ---------- //
-void *handle_client(void *arg);
-void *handle_send(void *arg);
-void *handle_receive(void *arg);
+#include "common/io.h"
+#include "common/myutil.h"
+#include "server_h/client.h"
+#include "server_h/global_msg.h"
+#include "server_h/struct.h"
 
 // ---------- main ---------- //
 int main(int argc, char *argv[]) {
@@ -198,111 +159,4 @@ int main(int argc, char *argv[]) {
   for (int i = 0; i < num_clients; i++) close(clients[i].sock);
   printf("%ssuccess%s sockets closed\n", FONT_GREEN, FONT_RESET);
   exit(EXIT_SUCCESS);
-}
-
-// ---------- handler function implementations ---------- //
-void *handle_client(void *arg) {
-  client_t *clients = ((client_handler_arg *) arg)->clients;
-  int *num_clients = ((client_handler_arg *) arg)->num_clients;
-  int *listening_socket = ((client_handler_arg *) arg)->listening_socket;
-
-  while (true) {
-    // クライアントの接続を待つ
-    client_t *client = &clients[*num_clients];
-    pthread_t *send_thread = &client->send_thread;
-    pthread_t *receive_thread = &client->recv_thread;
-    client->id = *num_clients;
-    (*num_clients)++;
-
-    client->sock = accept(*listening_socket, (struct sockaddr *) &client->addr, &(socklen_t) { sizeof(client->addr) });
-    if (client->sock == -1) {
-      printf("%serror%s accept failed\n", FONT_RED, FONT_RESET);
-      exit(EXIT_FAILURE);
-    }
-
-    // クライアント接続された
-    printf("%sinfo%s new connection from %s:%d\n", FONT_CYAN, FONT_RESET, inet_ntoa(client->addr.sin_addr), ntohs(client->addr.sin_port));
-    printf("%sinfo%s number of clients: %d/%d\n", FONT_CYAN, FONT_RESET, *num_clients, MAX_CLIENTS);
-
-    // スレッドの作成
-    if (pthread_create(send_thread, NULL, handle_send, (void *) client) != 0) {
-      printf("%serror%s sender thread creation failed\n", FONT_RED, FONT_RESET);
-      exit(EXIT_FAILURE);
-    }
-    if (pthread_create(receive_thread, NULL, handle_receive, (void *) client) != 0) {
-      printf("%serror%s receiver thread creation failed\n", FONT_RED, FONT_RESET);
-      exit(EXIT_FAILURE);
-    }
-    client->send_created = true;
-    client->recv_created = true;
-
-    // もしクライアントが最大数に達したら終了
-    if (*num_clients == MAX_CLIENTS) {
-      printf("%swarn%s max clients reached\n", FONT_YELLOW, FONT_RESET);
-      break;
-    }
-  }
-  pthread_exit(NULL);
-}
-
-// 送信用
-void *handle_send(void *arg) {
-  client_t *client = (client_t *) arg;
-  char buffer[BUFSIZE];
-
-  while (true) {
-    // 送信するべきデータがない場合は待機
-    if (message.message_id == client->last_message_id) continue;
-
-    // 送信データの構築
-    memset(buffer, '\0', BUFSIZE);
-    if (message.sender_id == client->id) {
-      sprintf(buffer, "%s%s%s%s\n%s", message.sender_name, FONT_BOLD, " (me)", FONT_RESET, message.content);
-    }
-    else {
-      sprintf(buffer, "%s\n%s", message.sender_name, message.content);
-    }
-
-    // 送信する
-    send(client->sock, buffer, BUFSIZE, 0);
-
-    // 送信したメッセージのIDを更新
-    client->last_message_id = message.message_id;
-  }
-  pthread_exit(NULL);
-}
-
-// 受信用
-void *handle_receive(void *arg) {
-  client_t *client = (client_t *) arg;
-  char buffer[BUFSIZE];
-  while (true) {
-    // 受信
-    memset(buffer, '\0', BUFSIZE);
-    recv(client->sock, buffer, BUFSIZE, 0);
-
-    // ユーザー名を下線付きで表示
-    printf("\r%s%s%s\n", FONT_UNDERLINED, client->name, FONT_RESET);
-    // メッセージを表示
-    printf(">> %s\n\n", buffer);
-    fflush(stdout);
-
-    // コマンドの処理
-    if (buffer[0] == '/') {
-    }
-    // 通常のメッセージ
-    else {
-      strcpy(message.content, buffer);
-      message.sender_id = client->id;
-      strcpy(message.sender_name, client->name);
-      message.message_id++;
-    }
-
-    // 終了判定
-    if (is_equal_str(buffer, "quit")) {
-      printf("%sinfo%s quit\n", FONT_CYAN, FONT_RESET);
-      break;
-    }
-  }
-  pthread_exit(NULL);
 }

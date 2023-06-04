@@ -2,6 +2,7 @@
 
 #include <netinet/in.h>
 #include <pthread.h>
+#include <stdbool.h>
 #include <stdio.h>
 
 #include "../common/io.h"
