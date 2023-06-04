@@ -34,7 +34,7 @@ typedef struct {
 
 typedef struct {
   char *buf;
-  int *num_clients;
+  char *sender_name;
   int sender_id;
   int message_id;
 } message_state;
@@ -283,6 +283,17 @@ void *handle_receive(void *arg) {
     if (is_equal_str(buffer, "quit")) {
       printf("%sinfo%s quit\n", FONT_CYAN, FONT_RESET);
       break;
+    }
+
+    // コマンドの処理
+    if (buffer[0] == '/') {
+    }
+    // 通常のメッセージ
+    else {
+      message.buf = buffer;
+      message.sender_id = client->id;
+      message.sender_name = client->name;
+      message.message_id++;
     }
   }
   pthread_exit(NULL);
