@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string.h>
+
 // todo
 // - 色を指定して出力できるようにする
 // - サニタイズする
@@ -15,3 +17,8 @@ const char* COLOR_BOLD = "\033[1m";
 const char* COLOR_RESET = "\033[0m";
 
 const int BUFSIZE = 1024;
+
+void chop(char* str) {
+  char* p = strchr(str, '\n');
+  if (p != NULL) *p = '\0';
+}
