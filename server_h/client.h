@@ -47,8 +47,6 @@ void *handle_client(void *arg) {
       printf("%serror%s receiver thread creation failed\n", FONT_RED, FONT_RESET);
       exit(EXIT_FAILURE);
     }
-    client->send_created = true;
-    client->recv_created = true;
 
     // もしクライアントが最大数に達したら終了
     if (*num_clients == MAX_CLIENTS) {

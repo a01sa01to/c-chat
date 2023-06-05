@@ -1,11 +1,12 @@
 // ---------- includes ---------- //
+#include <stdbool.h>
 #include <stdio.h>
 #include <unistd.h>
 
 #include "common/io.h"
 #include "common/myutil.h"
 #include "server_h/client.h"
-#include "server_h/global_msg.h"
+#include "server_h/global_var.h"
 #include "server_h/struct.h"
 
 // ---------- main ---------- //
@@ -83,78 +84,30 @@ int main(int argc, char *argv[]) {
     exit(EXIT_FAILURE);
   }
 
-  // 各スレッドの監視
-  bool client_handler_terminated = false;
+  // どれかが終了したか監視
   while (true) {
-    // 終了しているか確認
-    bool all_terminated = client_handler_terminated;
-    for (int i = 0; i < num_clients; i++) {
-      if ((clients[i].send_created && !clients[i].send_terminated) || (clients[i].recv_created && !clients[i].recv_terminated)) {
-        all_terminated = false;
-        break;
-      }
-    }
-    if (all_terminated) {
-      printf("%ssuccess%s all threads terminated\n", FONT_GREEN, FONT_RESET);
-      break;
-    }
-
-    // どれかが終了しているかチェック
-    bool any_terminated = client_handler_terminated;
+    bool any_terminated = false;
     for (int i = 0; i < num_clients; i++) {
       if (clients[i].send_terminated || clients[i].recv_terminated) {
         any_terminated = true;
         break;
       }
     }
-
-    // 最新の状態に更新する
-    if (!client_handler_terminated) {
-      if (pthread_tryjoin_np(client_handler, NULL) == 0) {
-        client_handler_terminated = true;
-        printf("%ssuccess%s client handler thread terminated\n", FONT_GREEN, FONT_RESET);
-      }
-    }
-    for (int i = 0; i < num_clients; i++) {
-      if (clients[i].send_created && !clients[i].send_terminated) {
-        if (pthread_tryjoin_np(clients[i].send_thread, NULL) == 0) {
-          clients[i].send_terminated = true;
-          printf("%ssuccess%s send thread for client %d terminated\n", FONT_GREEN, FONT_RESET, clients[i].id);
-        }
-      }
-      if (clients[i].recv_created && !clients[i].recv_terminated) {
-        if (pthread_tryjoin_np(clients[i].recv_thread, NULL) == 0) {
-          clients[i].recv_terminated = true;
-          printf("%ssuccess%s recv thread for client %d terminated\n", FONT_GREEN, FONT_RESET, clients[i].id);
-        }
-      }
-    }
-
-    // もしどれかが終了していたら終了処理
-    if (any_terminated) {
-      if (!client_handler_terminated) {
-        if (pthread_cancel(client_handler) != 0) {
-          printf("%serror%s failed to cancel client handler thread\n", FONT_RED, FONT_RESET);
-        }
-      }
-
-      for (int i = 0; i < num_clients; i++) {
-        if (clients[i].send_created && !clients[i].send_terminated) {
-          if (pthread_cancel(clients[i].send_thread) != 0) {
-            printf("%serror%s failed to cancel send thread for client %d\n", FONT_RED, FONT_RESET, clients[i].id);
-          }
-        }
-        if (clients[i].recv_created && !clients[i].recv_terminated) {
-          if (pthread_cancel(clients[i].recv_thread) != 0) {
-            printf("%serror%s failed to cancel recv thread for client %d\n", FONT_RED, FONT_RESET, clients[i].id);
-          }
-        }
-      }
-    }
+    if (any_terminated) break;
   }
 
   // 終了処理
   printf("%sinfo%s closing server...\n", FONT_CYAN, FONT_RESET);
+  if (pthread_cancel(client_handler) != 0) printf("%swarn%s failed to cancel client handler thread\n", FONT_YELLOW, FONT_RESET);
+  if (pthread_join(client_handler, NULL) != 0) printf("%swarn%s failed to join client handler thread\n", FONT_YELLOW, FONT_RESET);
+  printf("%ssuccess%s client handler thread terminated\n", FONT_GREEN, FONT_RESET);
+  for (int i = 0; i < num_clients; i++) {
+    if ((clients[i].send_created && !clients[i].send_terminated) && pthread_join(clients[i].send_thread, NULL) != 0) printf("%swarn%s failed to join send thread for client %d\n", FONT_YELLOW, FONT_RESET, clients[i].id);
+    printf("%ssuccess%s send thread for client %d terminated\n", FONT_GREEN, FONT_RESET, clients[i].id);
+    if ((clients[i].recv_created && !clients[i].recv_terminated) && pthread_join(clients[i].recv_thread, NULL) != 0) printf("%swarn%s failed to join recv thread for client %d\n", FONT_YELLOW, FONT_RESET, clients[i].id);
+    printf("%ssuccess%s recv thread for client %d terminated\n", FONT_GREEN, FONT_RESET, clients[i].id);
+  }
+
   close(listening_socket);
   for (int i = 0; i < num_clients; i++) close(clients[i].sock);
   printf("%ssuccess%s sockets closed\n", FONT_GREEN, FONT_RESET);

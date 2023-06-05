@@ -4,14 +4,15 @@
 
 #include "../common/io.h"
 #include "../common/myutil.h"
-#include "global_msg.h"
+#include "global_var.h"
 #include "struct.h"
 
 // 受信用
 void *handle_receive(void *arg) {
   client_t *client = (client_t *) arg;
   char buffer[BUFSIZE];
-  while (true) {
+  client->recv_created = true;
+  while (!should_exit) {
     // 受信
     memset(buffer, '\0', BUFSIZE);
     recv(client->sock, buffer, BUFSIZE, 0);
@@ -36,8 +37,10 @@ void *handle_receive(void *arg) {
     // 終了判定
     if (is_equal_str(buffer, "quit")) {
       printf("%sinfo%s quit\n", FONT_CYAN, FONT_RESET);
+      should_exit = true;
       break;
     }
   }
+  client->recv_terminated = true;
   pthread_exit(NULL);
 }
