@@ -10,6 +10,7 @@
 int main(int argc, char *argv[]) {
   // まずはコマンドが正しく入力されているかを確認する
   if (argc != 3) {
+    printf("%serror%s invalid number of arguments\n", FONT_RED, FONT_RESET);
     printf("%sinfo%s usage: %s <host> <port>\n", FONT_CYAN, FONT_RESET, argv[0]);
     exit(EXIT_FAILURE);
   }
@@ -71,11 +72,8 @@ int main(int argc, char *argv[]) {
     // 送信側
     if (pthread_tryjoin_np(send_thread, NULL) == 0) {
       sender_terminated = true;
-      printf("%ssuccess%s sender thread was terminated\n", FONT_GREEN, FONT_RESET);
-
       // 受信側を終了させる
       if (!receiver_terminated) {
-        printf("%sinfo%s trying to terminate receive thread\n", FONT_CYAN, FONT_RESET);
         if (pthread_cancel(receive_thread) != 0) printf("%serror%s receiver thread cancellation failed\n", FONT_RED, FONT_RESET);
       }
     }
@@ -83,11 +81,8 @@ int main(int argc, char *argv[]) {
     // 受信側
     if (pthread_tryjoin_np(receive_thread, NULL) == 0) {
       receiver_terminated = true;
-      printf("%ssuccess%s receive thread was terminated\n", FONT_GREEN, FONT_RESET);
-
       // 送信側を終了させる
       if (!sender_terminated) {
-        printf("%sinfo%s trying to terminate sender thread\n", FONT_CYAN, FONT_RESET);
         if (pthread_cancel(send_thread) != 0) printf("%serror%s sender thread cancellation failed\n", FONT_RED, FONT_RESET);
       }
     }

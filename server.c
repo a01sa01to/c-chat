@@ -13,6 +13,7 @@
 int main(int argc, char *argv[]) {
   // まずはコマンドが正しく入力されているかを確認する
   if (argc != 2) {
+    printf("%serror%s invalid number of arguments\n", FONT_RED, FONT_RESET);
     printf("%sinfo%s usage: %s <port>\n", FONT_CYAN, FONT_RESET, argv[0]);
     exit(EXIT_FAILURE);
   }
@@ -100,16 +101,12 @@ int main(int argc, char *argv[]) {
   printf("%sinfo%s closing server...\n", FONT_CYAN, FONT_RESET);
   if (pthread_cancel(client_handler) != 0) printf("%swarn%s failed to cancel client handler thread\n", FONT_YELLOW, FONT_RESET);
   if (pthread_join(client_handler, NULL) != 0) printf("%swarn%s failed to join client handler thread\n", FONT_YELLOW, FONT_RESET);
-  printf("%ssuccess%s client handler thread terminated\n", FONT_GREEN, FONT_RESET);
   for (int i = 0; i < num_clients; i++) {
     if ((clients[i].send_created && !clients[i].send_terminated) && pthread_join(clients[i].send_thread, NULL) != 0) printf("%swarn%s failed to join send thread for client %d\n", FONT_YELLOW, FONT_RESET, clients[i].id);
-    printf("%ssuccess%s send thread for client %d terminated\n", FONT_GREEN, FONT_RESET, clients[i].id);
     if ((clients[i].recv_created && !clients[i].recv_terminated) && pthread_join(clients[i].recv_thread, NULL) != 0) printf("%swarn%s failed to join recv thread for client %d\n", FONT_YELLOW, FONT_RESET, clients[i].id);
-    printf("%ssuccess%s recv thread for client %d terminated\n", FONT_GREEN, FONT_RESET, clients[i].id);
   }
 
   close(listening_socket);
   for (int i = 0; i < num_clients; i++) close(clients[i].sock);
-  printf("%ssuccess%s sockets closed\n", FONT_GREEN, FONT_RESET);
   exit(EXIT_SUCCESS);
 }

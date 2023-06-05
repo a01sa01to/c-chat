@@ -1,5 +1,6 @@
 #pragma once
 
+#include <arpa/inet.h>
 #include <stdio.h>
 
 #include "../common/io.h"
@@ -18,7 +19,7 @@ void *handle_receive(void *arg) {
     recv(client->sock, buffer, BUFSIZE, 0);
 
     // ユーザー名を下線付きで表示
-    printf("\r%s%s%s\n", FONT_UNDERLINED, client->name, FONT_RESET);
+    printf("\r%s%s%s [%s:%d]\n", FONT_UNDERLINED, client->name, FONT_RESET, inet_ntoa(client->addr.sin_addr), ntohs(client->addr.sin_port));
     // メッセージを表示
     printf(">> %s\n\n", buffer);
     fflush(stdout);
