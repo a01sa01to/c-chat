@@ -3,9 +3,14 @@
 Simple Chat Application written in C.
 
 IT IS NOT SAFE. DO NOT USE.
+THIS IS JUST A PRACTICE TO USE SOCKET AND THREAD.
+I DO NOT TAKE ANY RESPONSIBILITY FOR ANY DAMAGE.
+I DON'T RECOMMEND YOU TO COPY ANY PART OF THIS CODE.
 
-(埼玉大学生向け)
-レポートに一部分でも使うとコピペとします。コピペレポートは0点です。気を付けましょう。
+(主に埼玉大学生向け)
+本コードのコピーを禁止します。
+レポートに一部分でも使うとコピペとなります。
+コピペレポートは0点です。気を付けましょう。
 
 **Copyright (c) Asa (a01sa01to) All Rights Reserved.**
 
