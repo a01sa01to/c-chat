@@ -32,7 +32,7 @@ void *handle_send(void *arg) {
     string__append(res, message.content);
 
     // string -> char*
-    char *buffer;
+    char *buffer = (char *) malloc(sizeof(char) * (res->length + 1));
     string2cstr(res, buffer);
 
     // 送信する

@@ -97,7 +97,6 @@ bool string__startsWith(string *s, string *prefix) {
 }
 
 void string2cstr(string *s, char *res) {
-  res = (char *) malloc(sizeof(char) * (s->length + 1));
   struct string__node *p = s->head;
   int i = 0;
   while (p != NULL) {

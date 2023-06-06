@@ -23,7 +23,7 @@ void send_system_message(client_t *client, string *msg) {
   string__append(res, msg);
 
   // string -> char*
-  char *message;
+  char *message = (char *) malloc(sizeof(char) * (res->length + 1));
   string2cstr(res, message);
 
   // 送信
@@ -46,7 +46,7 @@ void *handle_receive(void *arg) {
     memset(buffer, '\0', BUFSIZE);
     recv(client->sock, buffer, BUFSIZE, 0);
 
-    char *name;
+    char *name = (char *) malloc(sizeof(char) * (client->name->length + 1));
     string2cstr(client->name, name);
 
     // ユーザー名を下線付きで表示

@@ -24,10 +24,10 @@ void* handle_receive(void* arg) {
     string* username = (string*) malloc(sizeof(string));
     string* message = (string*) malloc(sizeof(string));
     decode_username(username, buf);
-    decode_username(message, buf);
+    decode_message(message, buf);
 
-    char* username_cstr;
-    char* message_cstr;
+    char* username_cstr = (char*) malloc(sizeof(char) * (username->length + 1));
+    char* message_cstr = (char*) malloc(sizeof(char) * (message->length + 1));
     string2cstr(username, username_cstr);
     string2cstr(message, message_cstr);
 
