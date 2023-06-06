@@ -18,18 +18,18 @@ void* handle_receive(void* arg) {
     memset(buffer, '\0', BUFSIZE);
     recv(*sock, buffer, BUFSIZE, 0);
 
-    string* buf = (string*) malloc(sizeof(string));
-    string__from_cstr(buf, buffer);
+    string* buf;
+    string__from_cstr(&buf, buffer);
 
-    string* username = (string*) malloc(sizeof(string));
-    string* message = (string*) malloc(sizeof(string));
-    decode_username(username, buf);
-    decode_message(message, buf);
+    string* username;
+    string* message;
+    decode_username(&username, buf);
+    decode_message(&message, buf);
 
-    char* username_cstr = (char*) malloc(sizeof(char) * (username->length + 1));
-    char* message_cstr = (char*) malloc(sizeof(char) * (message->length + 1));
-    string2cstr(username, username_cstr);
-    string2cstr(message, message_cstr);
+    char* username_cstr;
+    char* message_cstr;
+    string2cstr(&username_cstr, username);
+    string2cstr(&message_cstr, message);
 
     // ユーザー名を下線付きで表示
     printf("\r%s%s%s\n", FONT_UNDERLINED, username_cstr, FONT_RESET);
@@ -37,9 +37,9 @@ void* handle_receive(void* arg) {
     printf(">> %s\n", message_cstr);
 
     // free
-    string__free(buf);
-    string__free(username);
-    string__free(message);
+    string__free(&buf);
+    string__free(&username);
+    string__free(&message);
     free(username_cstr);
 
     // 終了判定

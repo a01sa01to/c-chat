@@ -40,24 +40,24 @@ void sanitize(string* res, string* str) {
 }
 
 // 名前とメッセージを分離
-void decode_username(string* res, string* encoded) {
+void decode_username(string** res, string* encoded) {
   string__init(res);
   struct string__node* p = encoded->head;
   while (p != NULL) {
     if (p->val == '\n') {
       break;
     }
-    string__push_back(res, p->val);
+    string__push_back(*res, p->val);
     p = p->next;
   }
 }
 
-void decode_message(string* res, string* encoded) {
+void decode_message(string** res, string* encoded) {
   string__init(res);
   struct string__node* p = encoded->head;
   bool flag = false;
   while (p != NULL) {
-    if (flag) string__push_back(res, p->val);
+    if (flag) string__push_back(*res, p->val);
     if (p->val == '\n') flag = true;
     p = p->next;
   }

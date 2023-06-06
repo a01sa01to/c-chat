@@ -12,27 +12,27 @@
 
 void send_system_message(client_t *client, string *msg) {
   // メッセージを作成
-  string *res = (string *) malloc(sizeof(string));
-  string *username = (string *) malloc(sizeof(string));
-  string *br = (string *) malloc(sizeof(string));
-  string__init(res);
-  string__from_cstr(username, "System (only shown to you)");
-  string__from_cstr(br, "\n");
+  string *res;
+  string *username;
+  string *br;
+  string__init(&res);
+  string__from_cstr(&username, "System (only shown to you)");
+  string__from_cstr(&br, "\n");
   string__append(res, username);
   string__append(res, br);
   string__append(res, msg);
 
   // string -> char*
-  char *message = (char *) malloc(sizeof(char) * (res->length + 1));
-  string2cstr(res, message);
+  char *message;
+  string2cstr(&message, res);
 
   // 送信
   send(client->sock, message, res->length + 1, 0);
 
   // free
-  string__free(res);
-  string__free(username);
-  string__free(br);
+  string__free(&res);
+  string__free(&username);
+  string__free(&br);
   free(message);
 }
 
@@ -46,8 +46,8 @@ void *handle_receive(void *arg) {
     memset(buffer, '\0', BUFSIZE);
     recv(client->sock, buffer, BUFSIZE, 0);
 
-    char *name = (char *) malloc(sizeof(char) * (client->name->length + 1));
-    string2cstr(client->name, name);
+    char *name;
+    string2cstr(&name, client->name);
 
     // ユーザー名を下線付きで表示
     printf("\r%s%s%s [%s:%d]\n", FONT_UNDERLINED, name, FONT_RESET, inet_ntoa(client->addr.sin_addr), ntohs(client->addr.sin_port));
@@ -60,35 +60,35 @@ void *handle_receive(void *arg) {
     // コマンドの処理
     if (buffer[0] == '/') {
       // 返すstring
-      string *msg = (string *) malloc(sizeof(string));
+      string *msg;
       if (str_startsWith(buffer, "/setname ")) {
         // ユーザー名の変更
         char *new_name = buffer + strlen("/setname ");
         if (strlen(new_name) > 0 && strlen(new_name) < NAME_LEN) {
-          string__from_cstr(client->name, new_name);
-          string__from_cstr(msg, "Your name has been changed");
+          string__from_cstr(&client->name, new_name);
+          string__from_cstr(&msg, "Your name has been changed");
         }
         else {
-          string__from_cstr(msg, "Invalid name");
+          string__from_cstr(&msg, "Invalid name");
         }
       }
       else if (str_startsWith(buffer, "/list")) {
         // todo
-        string__from_cstr(msg, "Not implemented yet");
+        string__from_cstr(&msg, "Not implemented yet");
       }
       else if (str_startsWith(buffer, "/help")) {
-        string__from_cstr(msg, "Available commands:\n>> - /setname <name>: Change your name\n>> - /list: Show people in this chat\n>> - /help: Show this message");
+        string__from_cstr(&msg, "Available commands:\n>> - /setname <name>: Change your name\n>> - /list: Show people in this chat\n>> - /help: Show this message");
       }
       else {
-        string__from_cstr(msg, "Command not found");
+        string__from_cstr(&msg, "Command not found");
       }
       send_system_message(client, msg);
-      string__free(msg);
+      string__free(&msg);
     }
     // 通常のメッセージ
     else {
-      string__from_cstr(message.content, buffer);
-      string__copy(message.sender_name, client->name);
+      string__from_cstr(&message.content, buffer);
+      string__copy(&message.sender_name, client->name);
       message.sender_id = client->id;
       message.message_id++;
     }

@@ -29,10 +29,8 @@ int main(int argc, char *argv[]) {
   printf("%sinfo%s listening on port %d\n", FONT_CYAN, FONT_RESET, port);
 
   // グローバル変数の初期
-  message.content = (string *) malloc(sizeof(string));
-  message.sender_name = (string *) malloc(sizeof(string));
-  string__init(message.content);
-  string__init(message.sender_name);
+  string__init(&message.content);
+  string__init(&message.sender_name);
   message.sender_id = -1;
   message.message_id = -1;
 
@@ -72,8 +70,7 @@ int main(int argc, char *argv[]) {
   for (int i = 0; i < MAX_CLIENTS; i++) {
     clients[i].addr = (struct sockaddr_in) { 0 };
     clients[i].sock = -1;
-    clients[i].name = (string *) malloc(sizeof(string));
-    string__from_cstr(clients[i].name, "anonymous");
+    string__from_cstr(&clients[i].name, "anonymous");
     clients[i].send_thread = (pthread_t) { 0 };
     clients[i].recv_thread = (pthread_t) { 0 };
     clients[i].id = -1;
@@ -114,11 +111,11 @@ int main(int argc, char *argv[]) {
   }
   close(listening_socket);
   for (int i = 0; i < MAX_CLIENTS; i++) {
-    string__free(clients[i].name);
+    string__free(&clients[i].name);
     if (clients[i].sock != -1) close(clients[i].sock);
   }
-  string__free(message.content);
-  string__free(message.sender_name);
+  string__free(&message.content);
+  string__free(&message.sender_name);
 
   exit(EXIT_SUCCESS);
 }

@@ -15,23 +15,20 @@ typedef struct {
   int length;
 } string;
 
-void string__free(string *s) {
-  struct string__node *p = s->head;
+void string__free(string **s) {
+  struct string__node *p = (*s)->head;
   while (p != NULL) {
     struct string__node *q = p->next;
     free(p);
     p = q;
   }
-  free(s);
+  free(*s);
 }
 
-void string__init(string *s) {
-  if (s == NULL) {
-    puts("error: string__init s is NULL");
-    exit(EXIT_FAILURE);
-  }
-  s->head = NULL;
-  s->length = 0;
+void string__init(string **s) {
+  *s = (string *) malloc(sizeof(string));
+  (*s)->head = NULL;
+  (*s)->length = 0;
 }
 
 void string__push_back(string *s, char c) {
@@ -49,10 +46,10 @@ void string__push_back(string *s, char c) {
   }
 }
 
-void string__from_cstr(string *s, char *cstr) {
+void string__from_cstr(string **s, char *cstr) {
   string__init(s);
   int len = strlen(cstr);
-  for (int i = 0; i < len; i++) string__push_back(s, cstr[i]);
+  for (int i = 0; i < len; i++) string__push_back(*s, cstr[i]);
 }
 
 void string__append(string *s, string *t) {
@@ -63,25 +60,25 @@ void string__append(string *s, string *t) {
   }
 }
 
-void string__concat(string *res, string *lhs, string *rhs) {
+void string__concat(string **res, string *lhs, string *rhs) {
   string__init(res);
   struct string__node *p = lhs->head;
   while (p != NULL) {
-    string__push_back(res, p->val);
+    string__push_back(*res, p->val);
     p = p->next;
   }
   p = rhs->head;
   while (p != NULL) {
-    string__push_back(res, p->val);
+    string__push_back(*res, p->val);
     p = p->next;
   }
 }
 
-void string__copy(string *res, string *s) {
+void string__copy(string **res, string *s) {
   string__init(res);
   struct string__node *p = s->head;
   while (p != NULL) {
-    string__push_back(res, p->val);
+    string__push_back(*res, p->val);
     p = p->next;
   }
 }
@@ -96,14 +93,15 @@ bool string__startsWith(string *s, string *prefix) {
   return true;
 }
 
-void string2cstr(string *s, char *res) {
+void string2cstr(char **res, string *s) {
+  *res = (char *) malloc(sizeof(char) * (s->length + 1));
   struct string__node *p = s->head;
   int i = 0;
   while (p != NULL) {
-    res[i++] = p->val;
+    (*res)[i++] = p->val;
     p = p->next;
   }
-  res[i] = '\0';
+  (*res)[i] = '\0';
 }
 
 int strcmp_impl(string *lhs, string *rhs) {
