@@ -46,6 +46,8 @@ void *handle_receive(void *arg) {
     memset(buffer, '\0', BUFSIZE);
     recv(client->sock, buffer, BUFSIZE, 0);
 
+    if(should_exit) break;
+
     char *name;
     string2cstr(&name, client->name);
 
@@ -94,14 +96,14 @@ void *handle_receive(void *arg) {
       message.sender_id = client->id;
       message.message_id++;
 
+      // 終了判定
+      if (strcmp(buffer, "quit") == 0) {
+        printf("%sinfo%s quit\n", FONT_CYAN, FONT_RESET);
+        should_exit = true;
+        pthread_mutex_unlock(message.mutex);
+        break;
+      }
       pthread_mutex_unlock(message.mutex);
-    }
-
-    // 終了判定
-    if (strcmp(buffer, "quit") == 0) {
-      printf("%sinfo%s quit\n", FONT_CYAN, FONT_RESET);
-      should_exit = true;
-      break;
     }
   }
   client->recv_terminated = true;

@@ -47,8 +47,6 @@ void *handle_send(void *arg) {
     string__free(&br);
     free(buffer);
 
-    pthread_mutex_unlock(message.mutex);
-
     // 終了判定
     string *quit;
     string__from_cstr(&quit, "quit");
@@ -56,12 +54,15 @@ void *handle_send(void *arg) {
     if (is_equal_str(message.content, quit)) {
       printf("%sinfo%s quit\n", FONT_CYAN, FONT_RESET);
       string__free(&quit);
+      pthread_mutex_unlock(message.mutex);
       break;
     }
     string__free(&quit);
 
     // 送信したメッセージのIDを更新
     client->last_message_id = message.message_id;
+
+    pthread_mutex_unlock(message.mutex);
   }
   client->send_terminated = true;
   pthread_exit(NULL);
