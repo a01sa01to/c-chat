@@ -28,12 +28,6 @@ int main(int argc, char *argv[]) {
   }
   printf("%sinfo%s listening on port %d\n", FONT_CYAN, FONT_RESET, port);
 
-  // グローバル変数の初期
-  string__init(&message.content);
-  string__init(&message.sender_name);
-  message.sender_id = -1;
-  message.message_id = -1;
-
   // listening socketの作成
   int listening_socket = socket(PF_INET, SOCK_STREAM, 0);
   if (listening_socket == -1) {
@@ -63,6 +57,12 @@ int main(int argc, char *argv[]) {
     printf("%serror%s listen failed\n", FONT_RED, FONT_RESET);
     exit(EXIT_FAILURE);
   }
+
+  // グローバル変数の初期
+  string__init(&message.content);
+  string__init(&message.sender_name);
+  message.sender_id = -1;
+  message.message_id = -1;
 
   client_t clients[MAX_CLIENTS];
   int num_clients = 0;

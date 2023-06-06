@@ -65,6 +65,7 @@ void *handle_receive(void *arg) {
         // ユーザー名の変更
         char *new_name = buffer + strlen("/setname ");
         if (strlen(new_name) > 0 && strlen(new_name) < NAME_LEN) {
+          string__free(&client->name);
           string__from_cstr(&client->name, new_name);
           string__from_cstr(&msg, "Your name has been changed");
         }
@@ -87,6 +88,8 @@ void *handle_receive(void *arg) {
     }
     // 通常のメッセージ
     else {
+      string__free(&message.content);
+      string__free(&message.sender_name);
       string__from_cstr(&message.content, buffer);
       string__copy(&message.sender_name, client->name);
       message.sender_id = client->id;
