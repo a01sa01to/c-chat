@@ -1,4 +1,5 @@
 // ---------- includes ---------- //
+#include <pthread.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -63,6 +64,8 @@ int main(int argc, char *argv[]) {
   string__init(&message.sender_name);
   message.sender_id = -1;
   message.message_id = -1;
+  pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+  message.mutex = &mutex;
 
   client_t clients[MAX_CLIENTS];
   int num_clients = 0;
@@ -89,6 +92,8 @@ int main(int argc, char *argv[]) {
     exit(EXIT_FAILURE);
   }
 
+  bool client_handler_terminated = false;
+
   // どれかが終了したか監視
   while (true) {
     bool any_terminated = false;
@@ -99,23 +104,32 @@ int main(int argc, char *argv[]) {
       }
     }
     if (any_terminated) break;
+
+    // もしclient_handlerが終了したらソケットを閉じる
+    if (!client_handler_terminated) {
+      if (pthread_tryjoin_np(client_handler, NULL) == 0) {
+        client_handler_terminated = true;
+        printf("%sinfo%s client handler thread terminated\n", FONT_CYAN, FONT_RESET);
+        close(listening_socket);
+      }
+    }
   }
 
   // 終了処理
   printf("%sinfo%s closing server...\n", FONT_CYAN, FONT_RESET);
-  if (pthread_cancel(client_handler) != 0) printf("%swarn%s failed to cancel client handler thread\n", FONT_YELLOW, FONT_RESET);
-  if (pthread_join(client_handler, NULL) != 0) printf("%swarn%s failed to join client handler thread\n", FONT_YELLOW, FONT_RESET);
+  if (!client_handler_terminated && pthread_cancel(client_handler) != 0) printf("%swarn%s failed to cancel client handler thread\n", FONT_YELLOW, FONT_RESET);
+  if (!client_handler_terminated && pthread_join(client_handler, NULL) != 0) printf("%swarn%s failed to join client handler thread\n", FONT_YELLOW, FONT_RESET);
   for (int i = 0; i < num_clients; i++) {
     if ((clients[i].send_created && !clients[i].send_terminated) && pthread_join(clients[i].send_thread, NULL) != 0) printf("%swarn%s failed to join send thread for client %d\n", FONT_YELLOW, FONT_RESET, clients[i].id);
     if ((clients[i].recv_created && !clients[i].recv_terminated) && pthread_join(clients[i].recv_thread, NULL) != 0) printf("%swarn%s failed to join recv thread for client %d\n", FONT_YELLOW, FONT_RESET, clients[i].id);
   }
-  close(listening_socket);
+  string__free(&message.content);
+  string__free(&message.sender_name);
+  if (!client_handler_terminated) close(listening_socket);
   for (int i = 0; i < MAX_CLIENTS; i++) {
     string__free(&clients[i].name);
     if (clients[i].sock != -1) close(clients[i].sock);
   }
-  string__free(&message.content);
-  string__free(&message.sender_name);
 
   exit(EXIT_SUCCESS);
 }

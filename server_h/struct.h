@@ -6,13 +6,13 @@
 
 #include "../common/io.h"
 #include "../common/string.h"
-#define NAME_LEN 20
 
 typedef struct {
   string* content;
   string* sender_name;
   int sender_id;
   int message_id;
+  pthread_mutex_t* mutex;
 } message_state;
 
 typedef struct {

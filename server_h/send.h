@@ -16,6 +16,8 @@ void *handle_send(void *arg) {
     // 送信するべきデータがない場合は待機
     if (message.message_id == client->last_message_id) continue;
 
+    pthread_mutex_lock(message.mutex);
+
     // 送信データの構築
     string *res;
     string *username;
@@ -36,7 +38,7 @@ void *handle_send(void *arg) {
     string2cstr(&buffer, res);
 
     // 送信する
-    send(client->sock, buffer, BUFSIZE, 0);
+    send(client->sock, buffer, res->length + 1, 0);
 
     // free
     string__free(&res);
@@ -44,6 +46,8 @@ void *handle_send(void *arg) {
     string__free(&me);
     string__free(&br);
     free(buffer);
+
+    pthread_mutex_unlock(message.mutex);
 
     // 終了判定
     string *quit;

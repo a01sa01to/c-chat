@@ -64,7 +64,7 @@ void *handle_receive(void *arg) {
       if (str_startsWith(buffer, "/setname ")) {
         // ユーザー名の変更
         char *new_name = buffer + strlen("/setname ");
-        if (strlen(new_name) > 0 && strlen(new_name) < NAME_LEN) {
+        if (strlen(new_name) > 0) {
           string__free(&client->name);
           string__from_cstr(&client->name, new_name);
           string__from_cstr(&msg, "Your name has been changed");
@@ -73,12 +73,8 @@ void *handle_receive(void *arg) {
           string__from_cstr(&msg, "Invalid name");
         }
       }
-      else if (str_startsWith(buffer, "/list")) {
-        // todo
-        string__from_cstr(&msg, "Not implemented yet");
-      }
       else if (str_startsWith(buffer, "/help")) {
-        string__from_cstr(&msg, "Available commands:\n>> - /setname <name>: Change your name\n>> - /list: Show people in this chat\n>> - /help: Show this message");
+        string__from_cstr(&msg, "Available commands:\n>> - /setname <name>: Change your name\n>> - /help: Show this message");
       }
       else {
         string__from_cstr(&msg, "Command not found");
@@ -88,12 +84,17 @@ void *handle_receive(void *arg) {
     }
     // 通常のメッセージ
     else {
+      pthread_mutex_lock(message.mutex);
+
+      // Messageに書き込み
       string__free(&message.content);
       string__free(&message.sender_name);
       string__from_cstr(&message.content, buffer);
       string__copy(&message.sender_name, client->name);
       message.sender_id = client->id;
       message.message_id++;
+
+      pthread_mutex_unlock(message.mutex);
     }
 
     // 終了判定
