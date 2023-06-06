@@ -8,6 +8,12 @@
 #include "global_var.h"
 #include "struct.h"
 
+void send_system_message(client_t *client, char *msg) {
+  char message[BUFSIZE];
+  sprintf(message, "%s\n%s", "System (only shown to you)", msg);
+  send(client->sock, message, BUFSIZE, 0);
+}
+
 // 受信用
 void *handle_receive(void *arg) {
   client_t *client = (client_t *) arg;
@@ -26,6 +32,27 @@ void *handle_receive(void *arg) {
 
     // コマンドの処理
     if (buffer[0] == '/') {
+      if (str_startsWith(buffer, "/setname ")) {
+        // ユーザー名の変更
+        char *new_name = buffer + strlen("/setname ");
+        if (strlen(new_name) > 0 && strlen(new_name) < NAME_LEN) {
+          strcpy(client->name, new_name);
+          send_system_message(client, "Your name has been changed");
+        }
+        else {
+          send_system_message(client, "Invalid name");
+        }
+      }
+      else if (str_startsWith(buffer, "/list")) {
+        // todo
+        send_system_message(client, "Not implemented yet");
+      }
+      else if (str_startsWith(buffer, "/help")) {
+        send_system_message(client, "Available commands:\n>> - /setname <name>: Change your name\n>> - /list: Show people in this chat\n>> - /help: Show this message");
+      }
+      else {
+        send_system_message(client, "Command not found");
+      }
     }
     // 通常のメッセージ
     else {

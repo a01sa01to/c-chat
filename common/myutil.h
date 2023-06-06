@@ -25,3 +25,11 @@ int str2portNum(char* str) {
   if (res > 65535) return -1;
   return res;
 }
+
+bool str_startsWith(char* str, char* prefix) {
+  int len = strlen(prefix);
+  for (int i = 0; i < len; i++) {
+    if (str[i] != prefix[i]) return false;
+  }
+  return true;
+}
