@@ -18,6 +18,12 @@ void* handle_receive(void* arg) {
     memset(buffer, '\0', BUFSIZE);
     recv(*sock, buffer, BUFSIZE, 0);
 
+    // 何も受け取らなかった場合、サーバーが切断したと判断して終了
+    if (strlen(buffer) == 0) {
+      printf("\r%sinfo%s server closed\n", FONT_CYAN, FONT_RESET);
+      break;
+    }
+
     string* buf;
     string__from_cstr(&buf, buffer);
 
