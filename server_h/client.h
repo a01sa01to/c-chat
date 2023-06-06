@@ -38,6 +38,8 @@ void *handle_client(void *arg) {
     printf("%sinfo%s new connection from %s:%d\n", FONT_CYAN, FONT_RESET, inet_ntoa(client->addr.sin_addr), ntohs(client->addr.sin_port));
     printf("%sinfo%s number of clients: %d/%d\n", FONT_CYAN, FONT_RESET, *num_clients, MAX_CLIENTS);
 
+    client->last_message_id = message.message_id;
+
     // スレッドの作成
     if (pthread_create(send_thread, NULL, handle_send, (void *) client) != 0) {
       printf("%serror%s sender thread creation failed\n", FONT_RED, FONT_RESET);
