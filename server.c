@@ -4,13 +4,17 @@
 #include <unistd.h>
 
 #include "common/io.h"
+#include "common/mleak.h"
 #include "common/myutil.h"
+#include "common/string.h"
 #include "server_h/client.h"
 #include "server_h/global_var.h"
 #include "server_h/struct.h"
 
 // ---------- main ---------- //
 int main(int argc, char *argv[]) {
+  atexit(mleak_finalize);
+
   // まずはコマンドが正しく入力されているかを確認する
   if (argc != 2) {
     printf("%serror%s invalid number of arguments\n", FONT_RED, FONT_RESET);
@@ -24,9 +28,11 @@ int main(int argc, char *argv[]) {
   }
   printf("%sinfo%s listening on port %d\n", FONT_CYAN, FONT_RESET, port);
 
-  // グローバル変数の初期化
-  memset(message.content, '\0', BUFSIZE);
-  memset(message.sender_name, '\0', NAME_LEN);
+  // グローバル変数の初期
+  message.content = (string *) malloc(sizeof(string));
+  message.sender_name = (string *) malloc(sizeof(string));
+  string__init(message.content);
+  string__init(message.sender_name);
   message.sender_id = -1;
   message.message_id = -1;
 
@@ -66,7 +72,8 @@ int main(int argc, char *argv[]) {
   for (int i = 0; i < MAX_CLIENTS; i++) {
     clients[i].addr = (struct sockaddr_in) { 0 };
     clients[i].sock = -1;
-    strcpy(clients[i].name, "anonymous");
+    clients[i].name = (string *) malloc(sizeof(string));
+    string__from_cstr(clients[i].name, "anonymous");
     clients[i].send_thread = (pthread_t) { 0 };
     clients[i].recv_thread = (pthread_t) { 0 };
     clients[i].id = -1;
@@ -105,8 +112,13 @@ int main(int argc, char *argv[]) {
     if ((clients[i].send_created && !clients[i].send_terminated) && pthread_join(clients[i].send_thread, NULL) != 0) printf("%swarn%s failed to join send thread for client %d\n", FONT_YELLOW, FONT_RESET, clients[i].id);
     if ((clients[i].recv_created && !clients[i].recv_terminated) && pthread_join(clients[i].recv_thread, NULL) != 0) printf("%swarn%s failed to join recv thread for client %d\n", FONT_YELLOW, FONT_RESET, clients[i].id);
   }
-
   close(listening_socket);
-  for (int i = 0; i < num_clients; i++) close(clients[i].sock);
+  for (int i = 0; i < MAX_CLIENTS; i++) {
+    string__free(clients[i].name);
+    if (clients[i].sock != -1) close(clients[i].sock);
+  }
+  string__free(message.content);
+  string__free(message.sender_name);
+
   exit(EXIT_SUCCESS);
 }

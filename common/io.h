@@ -1,6 +1,9 @@
 #pragma once
+
 #include <stdlib.h>
 #include <string.h>
+
+#include "string.h"
 
 // フォント
 const char* FONT_RED = "\033[31m";
@@ -23,32 +26,38 @@ void chop(char* str) {
 }
 
 // 一応サニタイズ
-char* sanitize(char* str) {
-  char* ret = (char*) malloc(BUFSIZE);
-  memset(ret, '\0', BUFSIZE);
-  for (int i = 0; i < strlen(str); i++) {
-    if (str[i] == '\n') ret[i] = ' ';
-    ret[i] = str[i];
+void sanitize(string* res, string* str) {
+  struct string__node* p = str->head;
+  while (p != NULL) {
+    if (p->val == '\n') {
+      string__push_back(res, ' ');
+    }
+    else {
+      string__push_back(res, p->val);
+    }
+    p = p->next;
   }
-  return ret;
 }
 
 // 名前とメッセージを分離
-char* decode_username(char* encoded) {
-  char* username = (char*) malloc(BUFSIZE);
-  memset(username, '\0', BUFSIZE);
-  char* p = strchr(encoded, '\n');
-  if (p != NULL) {
-    strncpy(username, encoded, p - encoded);
+void decode_username(string* res, string* encoded) {
+  struct string__node* p = encoded->head;
+  while (p != NULL) {
+    if (p->val == '\n') {
+      break;
+    }
+    string__push_back(res, p->val);
+    p = p->next;
   }
-  return username;
 }
-char* decode_message(char* encoded) {
-  char* message = (char*) malloc(BUFSIZE);
-  memset(message, '\0', BUFSIZE);
-  char* p = strchr(encoded, '\n');
-  if (p != NULL) {
-    strcpy(message, p + 1);
+
+void decode_message(string* res, string* encoded) {
+  string__init(res);
+  struct string__node* p = encoded->head;
+  bool flag = false;
+  while (p != NULL) {
+    if (p->val == '\n') flag = true;
+    if (flag) string__push_back(res, p->val);
+    p = p->next;
   }
-  return message;
 }
